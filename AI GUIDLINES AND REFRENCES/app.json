@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "LexiAssist",
+    "slug": "lexiassist-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "lexiassist",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#3D7A52"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.lexiassist.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#3D7A52"
+      },
+      "package": "com.lexiassist.mobile"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-av",
+        { "microphonePermission": "Allow LexiAssist to access your microphone." }
+      ],
+      [
+        "expo-document-picker",
+        { "iCloudContainerEnvironment": "Production" }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

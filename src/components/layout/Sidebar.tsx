@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,67 +12,58 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
-import * as Haptics from 'expo-haptics';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.82, 340);
+const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.75, 300);
 
-const toolsConfig: Record<string, { activeTop: string | null; expandedSection: string | null; activeSub: string | null }> = {
-  '/(tabs)/home': { activeTop: 'dashboard', expandedSection: null, activeSub: null },
-  '/(tabs)/tools/tts': { activeTop: 'tts', expandedSection: 'textEditing', activeSub: null },
-  '/(tabs)/tools/tts/player': { activeTop: 'tts', expandedSection: 'textEditing', activeSub: null },
-  '/(tabs)/tools/reading': { activeTop: 'reading', expandedSection: 'textEditing', activeSub: null },
-  '/(tabs)/tools/reading/reader': { activeTop: 'reading', expandedSection: 'textEditing', activeSub: null },
-  '/(tabs)/tools/writing': { activeTop: 'writing', expandedSection: null, activeSub: null },
-  '/(tabs)/tools/studybuddy/quiz': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'quizzes' },
-  '/(tabs)/tools/studybuddy/quiz/session': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'quizzes' },
-  '/(tabs)/tools/studybuddy/quiz/results': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'quizzes' },
-  '/(tabs)/tools/studybuddy/quiz/review': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'quizzes' },
-  '/(tabs)/tools/studybuddy/flashcards': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'flashcards' },
-  '/(tabs)/tools/studybuddy/flashcards/session': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'flashcards' },
-  '/(tabs)/tools/studybuddy/chat': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'chat' },
-  '/(tabs)/tools/studybuddy/chat/conversation': { activeTop: null, expandedSection: 'studybuddy', activeSub: 'chat' },
+const toolsConfig: Record<string, { activeTop: string | null; activeSub: string | null }> = {
+  '/(tabs)/home': { activeTop: 'dashboard', activeSub: null },
+  '/(tabs)/tools/tts': { activeTop: 'tts', activeSub: null },
+  '/(tabs)/tools/reading': { activeTop: 'reading', activeSub: null },
+  '/(tabs)/tools/writing': { activeTop: 'writing', activeSub: null },
+  '/(tabs)/tools/studybuddy/quiz': { activeTop: 'studybuddy', activeSub: 'quizzes' },
+  '/(tabs)/tools/studybuddy/flashcards': { activeTop: 'studybuddy', activeSub: 'flashcards' },
+  '/(tabs)/tools/studybuddy/chat': { activeTop: 'studybuddy', activeSub: 'chat' },
 };
-
-const ttsSubItems = [
-  { label: 'Voice Option', value: 'voice' },
-  { label: 'Speed', value: 'speed' },
-  { label: 'Reading Options', value: 'reading' },
-  { label: 'Dim Surrounding Text', value: 'dim' },
-  { label: 'Tint Background Colour', value: 'tint' },
-  { label: 'Highlight Colour', value: 'highlight' },
-];
-
-const readingSubItems = [
-  { label: 'Font Choice', value: 'font' },
-  { label: 'Spacing', value: 'spacing' },
-  { label: 'Dim Surrounding Text', value: 'dim' },
-  { label: 'Tint Background Colour', value: 'tint' },
-];
 
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  
   const { isOpen, openSidebar, closeSidebar } = useSidebarStore();
   const { logout, user } = useAuthStore();
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  // Start completely off-screen to the left
   const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
+  const config = toolsConfig[pathname] || { activeTop: null, activeSub: null };
+
+  useEffect(() => {
+    if (config.activeTop === 'studybuddy') {
+      setExpandedSection('studybuddy');
+    }
+  }, [pathname]);
+
+  // Master Animation Controller
   useEffect(() => {
     if (isOpen) {
       Animated.parallel([
         Animated.spring(translateX, {
-          toValue: 0,
-          friction: 8,
-          tension: 40,
+          toValue: 0, // Slide in to origin
+          friction: 9,
+          tension: 45,
           useNativeDriver: true,
         }),
         Animated.timing(overlayOpacity, {
@@ -84,9 +75,9 @@ export default function Sidebar() {
     } else {
       Animated.parallel([
         Animated.spring(translateX, {
-          toValue: -DRAWER_WIDTH,
-          friction: 8,
-          tension: 40,
+          toValue: -DRAWER_WIDTH, // Slide completely out to the left
+          friction: 9,
+          tension: 45,
           useNativeDriver: true,
         }),
         Animated.timing(overlayOpacity, {
@@ -96,27 +87,32 @@ export default function Sidebar() {
         }),
       ]).start();
     }
-  }, [isOpen]);
+  }, [isOpen, translateX, overlayOpacity]);
 
+  // Gesture Math updated for Left-Anchored drawer
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return isOpen && gestureState.dx < -20;
+        // Only trigger gesture if open and swiping LEFT
+        return isOpen && gestureState.dx < -15;
       },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dx < 0) {
+          // Constrain movement so it doesn't drag past 0 on the right
           translateX.setValue(Math.max(-DRAWER_WIDTH, gestureState.dx));
           overlayOpacity.setValue(Math.max(0, 1 + gestureState.dx / DRAWER_WIDTH));
         }
       },
       onPanResponderRelease: (_, gestureState) => {
+        // If swiped more than 30% left, or swiped fast, trigger close
         if (gestureState.dx < -DRAWER_WIDTH * 0.3 || gestureState.vx < -0.5) {
           closeSidebar();
         } else {
+          // Snap back open
           Animated.spring(translateX, {
             toValue: 0,
-            friction: 8,
-            tension: 40,
+            friction: 9,
+            tension: 45,
             useNativeDriver: true,
           }).start();
           Animated.timing(overlayOpacity, {
@@ -129,106 +125,93 @@ export default function Sidebar() {
     })
   ).current;
 
-  const config = toolsConfig[pathname] || { activeTop: null, expandedSection: null, activeSub: null };
+  const isActiveTop = useCallback((key: string) => config.activeTop === key, [config]);
+  const isActiveSub = useCallback((key: string) => config.activeSub === key, [config]);
 
-  const isActiveTop = (key: string) => config.activeTop === key;
-  const isActiveSub = (key: string) => config.activeSub === key;
-
-  const handleNavigate = (path: string) => {
+  const handleNavigate = useCallback((path: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     closeSidebar();
     router.push(path as any);
-  };
+  }, [closeSidebar, router]);
 
-  const handleLogout = () => {
+  const toggleSection = useCallback((section: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setExpandedSection((prev) => (prev === section ? null : section));
+  }, []);
+
+  const handleLogout = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     logout();
     closeSidebar();
-    router.replace('/login');
-  };
-
-  const renderSubItems = () => {
-    if (config.expandedSection !== 'textEditing') return null;
-    const items = isActiveTop('tts') ? ttsSubItems : readingSubItems;
-    return (
-      <View style={styles.subItems}>
-        {items.map((item) => (
-          <TouchableOpacity key={item.value} style={styles.subItem}>
-            <Text style={styles.subItemText}>{item.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
+    router.replace('/(auth)/login');
+  }, [logout, closeSidebar, router]);
 
   return (
     <>
-      {/* Floating hamburger — visible when sidebar is closed */}
-      {!isOpen && (
-        <View style={[styles.floatingHamburger, { top: insets.top + sp['2'] }]}>
-          <TouchableOpacity
-            onPress={openSidebar}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.iconHit}
-            accessible={true}
-            accessibilityLabel="Open menu"
-            accessibilityRole="button"
-          >
-            <Ionicons name="menu" size={24} color="#3D7A52" />
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* 
+        The hamburger menu icon.
+        Anchored top-left so it stays out of the way. 
+      */}
+      <Animated.View 
+        style={[
+          styles.floatingHamburger, 
+          { 
+            top: insets.top + sp['2'],
+            opacity: overlayOpacity.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) 
+          }
+        ]}
+        pointerEvents={isOpen ? 'none' : 'auto'}
+      >
+        <TouchableOpacity
+          onPress={openSidebar}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+          style={styles.iconHit}
+        >
+          <Ionicons name="menu" size={26} color="#3D7A52" />
+        </TouchableOpacity>
+      </Animated.View>
 
-      {/* Overlay */}
-      {isOpen && (
-        <Animated.View
-          style={[styles.overlay, { opacity: overlayOpacity }]}>
-          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeSidebar} />
-        </Animated.View>
-      )}
+      {/* 
+        Overlay is PERMANENTLY mounted. 
+        It controls touches via pointerEvents instead of conditional rendering. 
+      */}
+      <Animated.View
+        style={[styles.overlay, { opacity: overlayOpacity }]}
+        pointerEvents={isOpen ? 'auto' : 'none'}
+      >
+        <TouchableOpacity 
+          style={StyleSheet.absoluteFill} 
+          activeOpacity={1} 
+          onPress={closeSidebar} 
+        />
+      </Animated.View>
 
-      {/* Drawer */}
+      {/* Drawer bounds now slide from the left limit */}
       <Animated.View
         style={[styles.drawer, { transform: [{ translateX }] }]}
         {...panResponder.panHandlers}
       >
-        {/* Header inside sidebar with safe area */}
         <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
           <View style={styles.header}>
-            <TouchableOpacity
-              onPress={closeSidebar}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.iconHit}
-              accessible={true}
-              accessibilityLabel="Close menu"
-              accessibilityRole="button"
-            >
-              <Ionicons name="close" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
             <View style={styles.logoRow}>
-              <Ionicons name="leaf" size={28} color="#FFFFFF" />
               <Text style={styles.wordmark}>LexiAssist</Text>
             </View>
+
             <View style={styles.headerRight}>
-              <TouchableOpacity
-                onPress={() => { closeSidebar(); router.push('/settings'); }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.iconHit}
-                accessible={true}
-                accessibilityLabel="Settings"
-                accessibilityRole="button"
-              >
-                <Ionicons name="settings-outline" size={22} color="#FFFFFF" />
-              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => { closeSidebar(); toggleTheme(); }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={styles.iconHit}
-                accessible={true}
-                accessibilityLabel="Toggle dark mode"
-                accessibilityRole="button"
               >
                 <Ionicons name="moon-outline" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+              {/* Close Button moved to the right edge for better ergonomics */}
+              <TouchableOpacity
+                onPress={closeSidebar}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                style={styles.iconHit}
+              >
+                <Ionicons name="close" size={26} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -239,29 +222,21 @@ export default function Sidebar() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: insets.bottom + sp['5'] }}
         >
+          <Text style={styles.sectionLabel}>MAIN</Text>
           <TouchableOpacity
             style={[styles.navItem, isActiveTop('dashboard') && styles.activeItem]}
             onPress={() => handleNavigate('/(tabs)/home')}
-            accessible={true}
-            accessibilityLabel="Dashboard"
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActiveTop('dashboard') }}
           >
             <Ionicons name="home" size={20} color={isActiveTop('dashboard') ? '#3D7A52' : '#FFFFFF'} />
             <Text style={[styles.navText, isActiveTop('dashboard') && styles.activeText]}>Dashboard</Text>
           </TouchableOpacity>
 
           <View style={styles.divider} />
-
           <Text style={styles.sectionLabel}>TOOLS</Text>
 
           <TouchableOpacity
             style={[styles.navItem, isActiveTop('tts') && styles.activeItem]}
             onPress={() => handleNavigate('/(tabs)/tools/tts')}
-            accessible={true}
-            accessibilityLabel="Text to Speech"
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActiveTop('tts') }}
           >
             <Ionicons name="mic" size={20} color={isActiveTop('tts') ? '#3D7A52' : '#FFFFFF'} />
             <Text style={[styles.navText, isActiveTop('tts') && styles.activeText]}>Text to Speech</Text>
@@ -270,10 +245,6 @@ export default function Sidebar() {
           <TouchableOpacity
             style={[styles.navItem, isActiveTop('reading') && styles.activeItem]}
             onPress={() => handleNavigate('/(tabs)/tools/reading')}
-            accessible={true}
-            accessibilityLabel="Reading Assistant"
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActiveTop('reading') }}
           >
             <Ionicons name="book" size={20} color={isActiveTop('reading') ? '#3D7A52' : '#FFFFFF'} />
             <Text style={[styles.navText, isActiveTop('reading') && styles.activeText]}>Reading Assistant</Text>
@@ -282,10 +253,6 @@ export default function Sidebar() {
           <TouchableOpacity
             style={[styles.navItem, isActiveTop('writing') && styles.activeItem]}
             onPress={() => handleNavigate('/(tabs)/tools/writing')}
-            accessible={true}
-            accessibilityLabel="Writing Assistant"
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActiveTop('writing') }}
           >
             <Ionicons name="pencil" size={20} color={isActiveTop('writing') ? '#3D7A52' : '#FFFFFF'} />
             <Text style={[styles.navText, isActiveTop('writing') && styles.activeText]}>Writing Assistant</Text>
@@ -293,47 +260,36 @@ export default function Sidebar() {
 
           <View>
             <TouchableOpacity
-              style={[styles.navItem, config.expandedSection === 'studybuddy' && styles.activeItem]}
-              onPress={() => handleNavigate('/(tabs)/tools/studybuddy/quiz')}
-              accessible={true}
-              accessibilityLabel="StudyBuddy"
-              accessibilityRole="button"
-              accessibilityState={{ selected: config.expandedSection === 'studybuddy' }}
+              style={[styles.navItem, isActiveTop('studybuddy') && styles.activeItem]}
+              onPress={() => toggleSection('studybuddy')}
             >
-              <Ionicons name="list" size={20} color={config.expandedSection === 'studybuddy' ? '#3D7A52' : '#FFFFFF'} />
-              <Text style={[styles.navText, config.expandedSection === 'studybuddy' && styles.activeText]}>StudyBuddy</Text>
+              <Ionicons name="school" size={20} color={isActiveTop('studybuddy') ? '#3D7A52' : '#FFFFFF'} />
+              <Text style={[styles.navText, isActiveTop('studybuddy') && styles.activeText]}>StudyBuddy</Text>
               <Ionicons
-                name={config.expandedSection === 'studybuddy' ? 'chevron-up' : 'chevron-down'}
+                name={expandedSection === 'studybuddy' ? 'chevron-up' : 'chevron-down'}
                 size={16}
-                color="rgba(255,255,255,0.7)"
+                color={isActiveTop('studybuddy') ? '#3D7A52' : "rgba(255,255,255,0.7)"}
                 style={styles.chevron}
               />
             </TouchableOpacity>
 
-            {config.expandedSection === 'studybuddy' && (
+            {expandedSection === 'studybuddy' && (
               <View style={styles.subItems}>
                 {[
-                  { label: 'Chat Assistant', key: 'chat' },
-                  { label: 'Flashcards', key: 'flashcards' },
-                  { label: 'Quizzes', key: 'quizzes' },
+                  { label: 'Chat Assistant', key: 'chat', icon: 'chatbubbles-outline' },
+                  { label: 'Flashcards', key: 'flashcards', icon: 'albums-outline' },
+                  { label: 'Quizzes', key: 'quizzes', icon: 'help-circle-outline' },
                 ].map((sub) => (
                   <TouchableOpacity
                     key={sub.key}
                     style={[styles.subItem, isActiveSub(sub.key) && styles.activeSubItem]}
-                    onPress={() =>
-                      handleNavigate(
-                        sub.key === 'chat'
-                          ? '/(tabs)/tools/studybuddy/chat'
-                          : sub.key === 'flashcards'
-                          ? '/(tabs)/tools/studybuddy/flashcards'
-                          : '/(tabs)/tools/studybuddy/quiz'
-                      )
-                    }
-                    accessible={true}
-                    accessibilityLabel={sub.label}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isActiveSub(sub.key) }}
+                    onPress={() => handleNavigate(`/(tabs)/tools/studybuddy/${sub.key}`)}
                   >
+                    <Ionicons 
+                      name={sub.icon as any} 
+                      size={18} 
+                      color={isActiveSub(sub.key) ? '#3D7A52' : 'rgba(255,255,255,0.7)'} 
+                    />
                     <Text style={[styles.subItemText, isActiveSub(sub.key) && styles.activeSubText]}>
                       {sub.label}
                     </Text>
@@ -342,29 +298,24 @@ export default function Sidebar() {
               </View>
             )}
           </View>
-
-          {renderSubItems()}
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + sp['4'] }]}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, sp['4']) }]}>
           <View style={styles.userRow}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{user?.name?.[0] || 'U'}</Text>
               <View style={styles.onlineDot} />
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>{user?.name || 'Guest User'}</Text>
-              <Text style={styles.userEmail}>{user?.email || 'guest@lexiassist.com'}</Text>
+              <Text style={styles.userName} numberOfLines={1}>{user?.name || 'Guest User'}</Text>
+              <Text style={styles.userEmail} numberOfLines={1}>{user?.email || 'guest@lexiassist.com'}</Text>
             </View>
             <TouchableOpacity
               onPress={handleLogout}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
               style={styles.iconHit}
-              accessible={true}
-              accessibilityLabel="Log out"
-              accessibilityRole="button"
             >
-              <Ionicons name="log-out-outline" size={20} color="rgba(255,255,255,0.7)" />
+              <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.7)" />
             </TouchableOpacity>
           </View>
         </View>
@@ -376,125 +327,135 @@ export default function Sidebar() {
 const styles = StyleSheet.create({
   floatingHamburger: {
     position: 'absolute',
-    left: sp['4'],
-    zIndex: 35,
+    left: sp['4'], 
+    zIndex: 100, 
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    zIndex: 40,
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    zIndex: 999, 
   },
   drawer: {
     position: 'absolute',
     top: 0,
-    left: 0,
+    left: 0, // Swapped from right: 0 to left: 0
     bottom: 0,
     width: DRAWER_WIDTH,
     backgroundColor: '#3D7A52',
-    zIndex: 50,
+    zIndex: 1000, 
     flexDirection: 'column',
+    shadowColor: '#000',
+    shadowOffset: { width: 5, height: 0 }, // Cast shadow to the right now
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 20,
   },
   headerWrapper: {
     backgroundColor: '#3D7A52',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    marginBottom: sp['4'],
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: sp['5'],
-    height: 56,
+    paddingHorizontal: sp['4'],
+    height: 60,
   },
   logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sp['2'],
-    position: 'absolute',
-    left: 56,
+    flex: 1,
   },
   wordmark: {
     color: '#FFFFFF',
-    fontSize: text.h4.fontSize,
-    fontWeight: text.h4.fontWeight,
-    letterSpacing: text.h4.letterSpacing,
+    ...text.h3,
+    letterSpacing: 0.5,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: sp['2'],
-    marginLeft: 'auto',
+    gap: sp['1'],
   },
   scroll: {
     flex: 1,
-    paddingHorizontal: sp['5'],
+    paddingHorizontal: sp['4'],
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: sp['3'],
-    height: 48,
-    paddingHorizontal: sp['3'],
-    borderRadius: 12,
-    marginBottom: sp['1'],
+    height: 52,
+    paddingHorizontal: sp['4'],
+    borderRadius: 14,
+    marginBottom: sp['2'],
   },
   activeItem: {
     backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   navText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 15,
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 16,
     fontWeight: '500',
     flex: 1,
-    letterSpacing: 0,
-    lineHeight: 20,
   },
   activeText: {
     color: '#3D7A52',
     fontWeight: '700',
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    marginVertical: sp['3'],
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginVertical: sp['4'],
   },
   sectionLabel: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.6)',
     ...text.overline,
     textTransform: 'uppercase',
-    marginBottom: sp['2'],
-    marginLeft: sp['3'],
+    letterSpacing: 1.2,
+    marginBottom: sp['3'],
+    marginLeft: sp['2'],
   },
   chevron: {
     marginLeft: 'auto',
   },
   subItems: {
-    paddingLeft: 44,
-    marginBottom: sp['2'],
+    paddingLeft: sp['6'],
+    marginTop: sp['1'],
+    marginBottom: sp['3'],
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255,255,255,0.2)',
+    marginLeft: 26,
   },
   subItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sp['3'],
     height: 44,
-    justifyContent: 'center',
     paddingHorizontal: sp['3'],
-    borderRadius: 12,
+    borderRadius: 10,
     marginBottom: sp['1'],
-    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   activeSubItem: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
   subItemText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 14,
-    lineHeight: 20,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 15,
   },
   activeSubText: {
     color: '#3D7A52',
-    fontWeight: '700',
+    fontWeight: '600',
   },
   footer: {
-    paddingHorizontal: sp['5'],
-    paddingTop: sp['5'],
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.15)',
+    padding: sp['5'],
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   userRow: {
     flexDirection: 'row',
@@ -502,45 +463,41 @@ const styles = StyleSheet.create({
     gap: sp['3'],
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
   },
   avatarText: {
     color: '#3D7A52',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   onlineDot: {
     position: 'absolute',
-    bottom: 1,
-    right: 1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#22C55E',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#3D7A52',
   },
   userInfo: {
     flex: 1,
   },
   userName: {
     color: '#FFFFFF',
-    fontSize: text.h4.fontSize,
-    fontWeight: text.h4.fontWeight,
-    letterSpacing: text.h4.letterSpacing,
-    lineHeight: text.h4.lineHeight,
+    fontSize: 16,
+    fontWeight: '600',
   },
   userEmail: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: text.caption.fontSize,
-    lineHeight: text.caption.lineHeight,
-    marginTop: sp['0.5'],
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    marginTop: 2,
   },
   iconHit: {
     width: 44,

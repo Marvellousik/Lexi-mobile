@@ -8,10 +8,8 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import Sidebar from '@/components/layout/Sidebar';
 import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/hooks/useTheme';
 import { useAnimatedPress } from '@/hooks/useAnimatedPress';
@@ -36,9 +34,8 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <View style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}
@@ -47,8 +44,10 @@ export default function ProfileScreen() {
         overScrollMode="never"
       >
         <View style={styles.avatarSection}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.name?.[0] || 'U'}</Text>
+          <View style={[styles.avatar, { backgroundColor: c.brand.primary }]}>
+            <Text style={[styles.avatarText, { color: c.text.inverse }]}>
+              {user?.name?.[0] || 'U'}
+            </Text>
           </View>
           <Text style={[styles.name, { color: c.text.primary }]}>
             {user?.name || 'Victoria'}
@@ -68,18 +67,18 @@ export default function ProfileScreen() {
         ))}
 
         <TouchableOpacity
-          style={[styles.logoutRow, { backgroundColor: '#EF4444' }]}
+          style={[styles.logoutRow, { backgroundColor: c.text.danger }]}
           onPress={handleLogout}
           activeOpacity={0.88}
           accessible={true}
           accessibilityLabel="Log out"
           accessibilityRole="button"
         >
-          <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Ionicons name="log-out-outline" size={22} color={c.text.inverse} />
+          <Text style={[styles.logoutText, { color: c.text.inverse }]}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -129,12 +128,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#3D7A52',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: sp['3'],
   },
-  avatarText: { color: '#FFFFFF', fontSize: 28, fontWeight: '700' },
+  avatarText: { fontSize: 28, fontWeight: '700' },
   name: { ...text.h3, marginBottom: sp['1'] },
   email: { ...text.body, color: '#888888' },
   row: {
@@ -167,5 +165,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  logoutText: { color: '#FFFFFF', ...text.button },
+  logoutText: { ...text.button },
 });

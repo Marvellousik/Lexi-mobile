@@ -1,10 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import Sidebar from '@/components/layout/Sidebar';
 import { useTheme } from '@/hooks/useTheme';
 import { useAnimatedPress } from '@/hooks/useAnimatedPress';
 import { text } from '@/constants/typography';
@@ -33,9 +31,8 @@ export default function ToolsScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <View style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}
@@ -44,7 +41,6 @@ export default function ToolsScreen() {
         overScrollMode="never"
       >
         <Animated.View style={{ opacity: fadeAnim }}>
-          <Text style={[styles.pageTitle, { color: c.text.primary }]}>All Tools</Text>
           <View style={{ height: sp['6'] }} />
 
           {TOOLS.map((tool, index) => (
@@ -58,7 +54,7 @@ export default function ToolsScreen() {
           ))}
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -123,7 +119,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: {
     paddingHorizontal: sp['6'],
-    paddingTop: sp['6'],
     paddingBottom: 120,
   },
   pageTitle: {

@@ -11,7 +11,6 @@ import {
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import Sidebar from '@/components/layout/Sidebar';
 import { useTheme } from '@/hooks/useTheme';
 import * as Haptics from 'expo-haptics';
 import { text } from '@/constants/typography';
@@ -85,7 +84,6 @@ export default function QuizSessionScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}

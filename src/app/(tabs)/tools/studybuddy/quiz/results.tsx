@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, Animated, SafeAreaView } from
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import Sidebar from '@/components/layout/Sidebar';
 import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
@@ -58,7 +57,6 @@ export default function QuizResultsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <View style={styles.content}>
         <Animated.View
           style={[

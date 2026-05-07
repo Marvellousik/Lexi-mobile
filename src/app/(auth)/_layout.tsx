@@ -4,10 +4,11 @@ import { useAuthStore } from '@/stores/authStore';
 
 export default function AuthLayout() {
   const router = useRouter();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = user !== null;
 
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (isAuthenticated) {
       router.replace('/(tabs)/home');
     }
   }, [isAuthenticated]);

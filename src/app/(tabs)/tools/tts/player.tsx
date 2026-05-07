@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import Sidebar from '@/components/layout/Sidebar';
 import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
@@ -32,7 +31,6 @@ export default function TtsPlayerScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}

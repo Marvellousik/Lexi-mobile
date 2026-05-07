@@ -6,7 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = user !== null;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function SplashScreen() {
         duration: 400,
         useNativeDriver: true,
       }).start(() => {
-        if (isAuthenticated()) {
+        if (isAuthenticated) {
           router.replace('/(tabs)/home');
         } else {
           router.replace('/(auth)/login');

@@ -12,7 +12,6 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
-import Sidebar from '@/components/layout/Sidebar';
 import UploadZone from '@/components/shared/UploadZone';
 import DocRow from '@/components/shared/DocRow';
 import PrimaryButton from '@/components/shared/PrimaryButton';
@@ -65,7 +64,6 @@ export default function TtsUploadScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}

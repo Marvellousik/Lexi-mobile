@@ -1,9 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import Sidebar from '@/components/layout/Sidebar';
 import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
@@ -28,9 +26,8 @@ export default function HistoryScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <View style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}
@@ -39,7 +36,6 @@ export default function HistoryScreen() {
         overScrollMode="never"
       >
         <Animated.View style={{ opacity: fadeAnim }}>
-          <Text style={[styles.pageTitle, { color: c.text.primary }]}>History</Text>
           <View style={{ height: sp['6'] }} />
 
           {HISTORY.length > 0 ? (
@@ -83,7 +79,7 @@ export default function HistoryScreen() {
           )}
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -91,7 +87,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: {
     paddingHorizontal: sp['6'],
-    paddingTop: sp['6'],
     paddingBottom: 120,
   },
   pageTitle: {

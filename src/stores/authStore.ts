@@ -13,12 +13,11 @@ interface AuthState {
   user: User | null;
   setAuth: (user: User, accessToken: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
-  isAuthenticated: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       setAuth: async (user, accessToken, refreshToken) => {
         await SecureStore.setItemAsync('access_token', accessToken);
@@ -30,7 +29,6 @@ export const useAuthStore = create<AuthState>()(
         await SecureStore.deleteItemAsync('refresh_token');
         set({ user: null });
       },
-      isAuthenticated: () => !!get().user,
     }),
     {
       name: 'auth-storage',

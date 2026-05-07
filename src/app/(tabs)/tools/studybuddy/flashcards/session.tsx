@@ -2,7 +2,6 @@ import React, { useState, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import Sidebar from '@/components/layout/Sidebar';
 import { useTheme } from '@/hooks/useTheme';
 import * as Haptics from 'expo-haptics';
 import { text } from '@/constants/typography';
@@ -88,7 +87,6 @@ export default function FlashcardsSessionScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <Sidebar />
       <View style={styles.content}>
         <Text style={[styles.docName, { color: c.text.primary }]}>History of Hitler</Text>
 

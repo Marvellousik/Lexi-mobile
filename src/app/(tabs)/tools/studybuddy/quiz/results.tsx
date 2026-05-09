@@ -1,45 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, SafeAreaView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Image, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
+import { PrimaryButton } from '@/components/shared/PrimaryButton';
 
 const SCORE = 10;
 const TOTAL = 20;
 
-const getScoreMessage = (score: number, total: number) => {
-  const pct = score / total;
-  if (pct >= 0.8) return 'Excellent Work!';
-  if (pct >= 0.5) return 'Good Job!';
-  return 'Keep Going!';
-};
-
-const scoreColor = SCORE / TOTAL >= 0.8 ? '#3D7A52' : '#F97316';
-
 export default function QuizResultsScreen() {
   const router = useRouter();
+  const { retake } = useLocalSearchParams();
   const c = useTheme();
   const [displayScore, setDisplayScore] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 6,
-        tension: 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
 
     const interval = setInterval(() => {
       setDisplayScore((prev) => {
@@ -49,133 +34,178 @@ export default function QuizResultsScreen() {
         }
         return prev + 1;
       });
-    }, 30);
+    }, 40);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top', 'bottom']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <View style={styles.content}>
-        <Animated.View
-          style={[
-            styles.avatarCircle,
-            { backgroundColor: '#FDD835', opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
-          ]}
-        >
-          <Ionicons name="happy" size={64} color="#3D7A52" />
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          
+          {/* IMAGE SECTION */}
+          <View style={styles.avatarContainer}>
+            <Image 
+              source={retake === 'true' 
+                ? require('../../../../../../assets/images/tools/quiz-result-avatar-2.png')
+                : require('../../../../../../assets/images/tools/quiz-result-avatar.png')
+              } 
+              style={styles.avatar}
+            />
+          </View>
+
+          {/* LARGE SPACING TO PREVENT OVERLAP */}
+          <View style={{ height: sp['16'] }} />
+
+          {/* SCORE SECTION - AIRY DESIGN */}
+          <View style={styles.scoreBlock}>
+            <Text style={[styles.youScored, { color: c.text.primary }]}>You Scored</Text>
+            
+            <View style={{ height: sp['4'] }} />
+            
+            <Text style={[styles.scoreText, { color: '#F97316' }]}>
+              {displayScore}/{TOTAL}
+            </Text>
+            
+            <View style={{ height: sp['4'] }} />
+            
+            <Text style={[styles.message, { color: c.text.secondary }]}>Practice Harder!</Text>
+          </View>
+
+          {/* LARGE SPACING BEFORE BUTTONS */}
+          <View style={{ height: sp['20'] }} />
+
+          {/* ACTION BUTTONS */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.tryAgainButton}
+              onPress={() => router.replace({ pathname: '/(tabs)/tools/studybuddy/quiz/session', params: { retake: 'true' } })}
+              activeOpacity={0.88}
+            >
+              <Ionicons name="refresh" size={20} color="#3D7A52" />
+              <Text style={styles.tryAgainText}>Try Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.checkButton}
+              onPress={() => router.push('./review')}
+              activeOpacity={0.88}
+            >
+              <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+              <Text style={styles.checkText}>Check Answers</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* FINAL BOTTOM PADDING FOR NAVBAR SAFETY */}
+          <View style={{ height: 100 }} />
         </Animated.View>
-
-        <Animated.Text
-          style={[
-            styles.youScored,
-            { color: c.text.primary, opacity: fadeAnim },
-          ]}
-        >
-          You Scored
-        </Animated.Text>
-        <Animated.Text
-          style={[
-            styles.score,
-            { color: scoreColor, opacity: fadeAnim },
-          ]}
-        >
-          {displayScore}/{TOTAL}
-        </Animated.Text>
-        <Animated.Text
-          style={[
-            styles.message,
-            { color: c.text.primary, opacity: fadeAnim },
-          ]}
-        >
-          {getScoreMessage(SCORE, TOTAL)}
-        </Animated.Text>
-
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={styles.tryAgainButton}
-            onPress={() => router.replace('/(tabs)/tools/studybuddy/quiz/session')}
-            activeOpacity={0.88}
-            accessible={true}
-            accessibilityLabel="Try again"
-            accessibilityRole="button"
-          >
-            <Ionicons name="refresh" size={18} color="#3D7A52" />
-            <Text style={styles.tryAgainText}>Try Again</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.checkButton}
-            onPress={() => router.push('/(tabs)/tools/studybuddy/quiz/review')}
-            activeOpacity={0.88}
-            accessible={true}
-            accessibilityLabel="Check answers"
-            accessibilityRole="button"
-          >
-            <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-            <Text style={styles.checkText}>Check Answers</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 60, 
+  },
   content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: sp['6'],
+    paddingTop: sp['10'],
   },
-  avatarCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+  avatarContainer: {
+    width: 260, // Slightly larger
+    height: 260,
+    borderRadius: 130,
+    overflow: 'hidden',
+    backgroundColor: '#FDD835', 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  scoreBlock: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: sp['6'],
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
+    width: '100%',
   },
-  youScored: { ...text.h2, marginBottom: sp['2'] },
-  score: { ...text.display, marginBottom: sp['2'] },
-  message: { ...text.h4, marginBottom: sp['8'] },
+  youScored: {
+    ...(text.h2 as any),
+    fontSize: 30,
+    lineHeight: 38,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  scoreText: {
+    fontSize: 76, // Even bigger
+    lineHeight: 90, 
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -1.5,
+  },
+  message: {
+    ...(text.h3 as any),
+    fontSize: 22,
+    lineHeight: 30,
+    fontWeight: '600',
+    textAlign: 'center',
+    opacity: 0.9,
+  },
   buttonRow: {
     flexDirection: 'row',
-    gap: sp['3'],
+    gap: sp['4'],
     width: '100%',
+    marginBottom: 40, // Extra margin at the bottom of the button row
   },
   tryAgainButton: {
     flex: 1,
-    height: 54,
-    borderWidth: 1.5,
+    height: 64,
+    borderWidth: 2,
     borderColor: '#3D7A52',
-    borderRadius: 14,
+    borderRadius: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: sp['2'],
   },
-  tryAgainText: { color: '#3D7A52', ...text.button },
+  tryAgainText: { 
+    color: '#3D7A52', 
+    fontSize: 17,
+    fontWeight: '700' 
+  },
   checkButton: {
-    flex: 1,
-    height: 54,
+    flex: 1.2,
+    height: 64,
     backgroundColor: '#3D7A52',
-    borderRadius: 14,
+    borderRadius: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: sp['2'],
     shadowColor: '#3D7A52',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 8,
   },
-  checkText: { color: '#FFFFFF', ...text.button },
+  checkText: { 
+    color: '#FFFFFF', 
+    fontSize: 17,
+    fontWeight: '700' 
+  },
 });

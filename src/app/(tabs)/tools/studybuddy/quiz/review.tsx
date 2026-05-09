@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -16,17 +16,29 @@ import { sp } from '@/constants/spacing';
 const QUESTIONS = [
   {
     id: '1',
-    question: 'In which year was Adolf Hitler born?',
-    options: ['1887', '1888', '1889', '1890', '1891'],
-    correctAnswerIndex: 2,
-    userAnswerIndex: 3,
+    question: 'What political, economic, and social factors enabled Adolf Hitler to gain widespread support in Germany?',
+    options: [
+      'Hitler gained support due to political instability and economic hardship.',
+      'Germany’s success in World War I',
+      'Strong international approval of German democracy',
+      'Advances in space technology',
+      'A booming tourism industry'
+    ],
+    correctAnswerIndex: 1, // Let's say #2 is correct for demo
+    userAnswerIndex: 2, // User picked #3
   },
   {
     id: '2',
-    question: 'Where was Adolf Hitler born?',
-    options: ['Berlin', 'Vienna', 'Braunau am Inn', 'Munich', 'Salzburg'],
-    correctAnswerIndex: 2,
-    userAnswerIndex: 2,
+    question: 'What political, economic, and social factors enabled Adolf Hitler to gain widespread support in Germany?',
+    options: [
+      'Hitler gained support due to political instability and economic hardship.',
+      'Germany’s success in World War I',
+      'Strong international approval of German democracy',
+      'Advances in space technology',
+      'A booming tourism industry'
+    ],
+    correctAnswerIndex: 0,
+    userAnswerIndex: 0,
   },
 ];
 
@@ -43,7 +55,7 @@ export default function QuizReviewScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
       <ScrollView
         style={{ flex: 1 }}
@@ -54,52 +66,52 @@ export default function QuizReviewScreen() {
       >
         <Animated.View style={{ opacity: fadeAnim }}>
           <Text style={[styles.pageTitle, { color: c.text.primary }]}>
-            Answer Review
+            Quizzes
           </Text>
-          <Text style={[styles.subtitle, { color: c.text.muted }]}>
-            History of Hitler
+          <Text style={[styles.docName, { color: c.text.primary }]}>
+            History of Hitler : Answer Review
           </Text>
-          <View style={{ height: sp['6'] }} />
+          
+          <View style={{ height: sp['8'] }} />
 
           {QUESTIONS.map((q, qi) => (
             <View key={q.id} style={styles.questionBlock}>
-              <Text style={[styles.questionLabel, { color: c.brand.primary }]}>
-                Question {qi + 1}/20
-              </Text>
-              <Text style={[styles.questionText, { color: c.text.primary }]}>
-                {q.question}
-              </Text>
+              <View style={styles.questionHeader}>
+                <Text style={styles.questionCounter}>
+                  <Text style={{ color: '#6B9E7C', fontWeight: '700' }}>Question {qi + 1}/20</Text>
+                  {' '}{q.question}
+                </Text>
+              </View>
+
+              <View style={{ height: sp['4'] }} />
 
               {q.options.map((option, index) => {
                 const isCorrect = index === q.correctAnswerIndex;
-                const isUserWrong = index === q.userAnswerIndex && index !== q.correctAnswerIndex;
+                const isUserPicked = index === q.userAnswerIndex;
+                const isWrong = isUserPicked && !isCorrect;
+
                 return (
                   <View
                     key={index}
                     style={[
                       styles.option,
                       isCorrect && styles.optionCorrect,
-                      isUserWrong && styles.optionWrong,
+                      isWrong && styles.optionWrong,
                     ]}
                   >
                     <Text
                       style={[
                         styles.optionText,
-                        isCorrect && styles.optionTextCorrect,
-                        isUserWrong && styles.optionTextWrong,
+                        isCorrect && { color: '#FFFFFF' },
+                        isWrong && { color: '#EF4444' },
                       ]}
                     >
                       {option}
                     </Text>
-                    {isCorrect && (
-                      <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                    )}
-                    {isUserWrong && (
-                      <Ionicons name="close" size={18} color="#EF4444" />
-                    )}
                   </View>
                 );
               })}
+              <View style={styles.divider} />
             </View>
           ))}
         </Animated.View>
@@ -113,47 +125,57 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: sp['6'],
     paddingTop: sp['6'],
-    paddingBottom: 120,
+    paddingBottom: 140,
   },
   pageTitle: {
-    ...text.h1,
+    ...(text.h1 as any),
     letterSpacing: -0.5,
     lineHeight: 34,
+    marginBottom: sp['2'],
   },
-  subtitle: { ...text.body, marginTop: sp['1'] },
-  questionBlock: { marginBottom: sp['6'] },
-  questionLabel: {
-    ...text.caption,
-    fontWeight: '600',
-    marginBottom: sp['1.5'],
+  docName: { 
+    ...(text.h3 as any), 
+    fontWeight: '800',
+    marginBottom: sp['4'] 
   },
-  questionText: {
-    ...text.body,
+  questionBlock: { 
+    marginBottom: sp['6'] 
+  },
+  questionHeader: {
+    flexDirection: 'row',
+  },
+  questionCounter: {
+    ...(text.body as any),
     lineHeight: 24,
-    marginBottom: sp['3'],
+    fontSize: 16,
   },
   option: {
-    minHeight: 48,
-    borderWidth: 1.5,
+    minHeight: 56,
+    borderWidth: 1,
     borderColor: '#E5E5E5',
     borderRadius: 12,
-    padding: sp['3'],
-    marginBottom: sp['2'],
+    padding: sp['4'],
+    marginBottom: sp['2.5'],
     backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   optionCorrect: {
-    backgroundColor: '#3D7A52',
-    borderColor: '#3D7A52',
+    backgroundColor: '#1B9C42', // Brighter green for correct background
+    borderColor: '#1B9C42',
   },
   optionWrong: {
     borderColor: '#EF4444',
     borderWidth: 2,
-    backgroundColor: '#FEF2F2',
   },
-  optionText: { ...text.body },
-  optionTextCorrect: { color: '#FFFFFF', fontWeight: '600' },
-  optionTextWrong: { color: '#111111' },
+  optionText: { 
+    ...(text.body as any), 
+    fontSize: 14,
+    fontWeight: '500' 
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#EEEEEE',
+    marginTop: sp['6'],
+    marginBottom: sp['2'],
+  },
 });

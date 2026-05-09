@@ -8,7 +8,7 @@ import {
   Animated,
   SafeAreaView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -33,6 +33,7 @@ const QUESTIONS = [
 
 export default function QuizSessionScreen() {
   const router = useRouter();
+  const { retake } = useLocalSearchParams();
   const c = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -62,7 +63,7 @@ export default function QuizSessionScreen() {
 
   const handleNext = () => {
     if (isLast) {
-      router.push('/(tabs)/tools/studybuddy/quiz/results');
+      router.push({ pathname: './results', params: { retake: retake || 'false' } });
     } else {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(answers[currentIndex + 1] ?? null);
@@ -82,7 +83,7 @@ export default function QuizSessionScreen() {
   });
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top', 'bottom']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
       <ScrollView
         style={{ flex: 1 }}
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: sp['6'],
     paddingTop: sp['6'],
-    paddingBottom: 120,
+    paddingBottom: 140,
   },
   pageTitle: {
     ...text.h1,

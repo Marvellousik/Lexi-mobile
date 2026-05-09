@@ -35,8 +35,8 @@ export function UploadZone({ onFilePicked }: UploadZoneProps) {
         style={[
           styles.container,
           {
-            borderColor: c.brand.primary,
-            backgroundColor: c.brand.primaryLight,
+            borderColor: '#6B9E7C',
+            backgroundColor: '#EAF4EE',
           },
         ]}
         onPress={pickFile}
@@ -47,8 +47,8 @@ export function UploadZone({ onFilePicked }: UploadZoneProps) {
         accessibilityRole="button"
         {...handlers}
       >
-        <View style={[styles.iconCircle, { backgroundColor: c.brand.primary }]}>
-          <Ionicons name="cloud-upload-outline" size={24} color="#FFFFFF" />
+        <View style={[styles.iconCircle, { backgroundColor: '#3D7A52' }]}>
+          <Ionicons name="cloud-upload" size={28} color="#FFFFFF" />
         </View>
         <Text style={[styles.title, { color: c.brand.primary }]}>
           Click to upload or drag and drop
@@ -69,28 +69,26 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderRadius: 16,
-    paddingVertical: sp['10'],
+    paddingVertical: sp['8'],
     paddingHorizontal: sp['6'],
     alignItems: 'center',
-    gap: sp['3'],
+    gap: sp['2.5'],
   },
   iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: sp['2'],
   },
   title: {
-    ...text.h4,
+    ...(text.h4 as any),
+    fontWeight: '700',
     textAlign: 'center',
   },
   subtitle: {
     ...text.bodySm,
-    textAlign: 'center',
-  },
-  hint: {
-    ...text.caption,
     textAlign: 'center',
   },
 });

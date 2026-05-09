@@ -3,8 +3,8 @@ import { View, TouchableOpacity, Text, StyleSheet, Modal } from 'react-native';
 
 interface Props {
   visible: boolean;
-  mode: 'word' | 'line';
-  onChange: (mode: 'word' | 'line') => void;
+  mode: 'letter' | 'word' | 'line';
+  onChange: (mode: 'letter' | 'word' | 'line') => void;
   onClose: () => void;
 }
 
@@ -13,6 +13,12 @@ export default function ReadingModeSelector({ visible, mode, onChange, onClose }
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
         <View style={styles.card}>
+          <TouchableOpacity
+            style={[styles.option, mode === 'letter' && styles.activeOption]}
+            onPress={() => { onChange('letter'); onClose(); }}
+          >
+            <Text style={[styles.text, mode === 'letter' && styles.activeText]}>Letter by Letter</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.option, mode === 'word' && styles.activeOption]}
             onPress={() => { onChange('word'); onClose(); }}

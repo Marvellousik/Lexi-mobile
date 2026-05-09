@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Modal } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Modal, ScrollView } from 'react-native';
 
 interface Props {
   visible: boolean;
-  level: 'beginner' | 'intermediate';
-  onChange: (level: 'beginner' | 'intermediate') => void;
+  level: 'simplified' | 'beginner' | 'intermediate';
+  onChange: (level: 'simplified' | 'beginner' | 'intermediate') => void;
   onClose: () => void;
 }
 
@@ -13,18 +13,19 @@ export default function DifficultySelector({ visible, level, onChange, onClose }
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
         <View style={styles.card}>
-          <TouchableOpacity
-            style={[styles.option, level === 'beginner' && styles.activeOption]}
-            onPress={() => { onChange('beginner'); onClose(); }}
-          >
-            <Text style={[styles.text, level === 'beginner' && styles.activeText]}>Beginner</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.option, level === 'intermediate' && styles.activeOption]}
-            onPress={() => { onChange('intermediate'); onClose(); }}
-          >
-            <Text style={[styles.text, level === 'intermediate' && styles.activeText]}>Intermediate</Text>
-          </TouchableOpacity>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+            {(['simplified', 'beginner', 'intermediate'] as const).map((l) => (
+              <TouchableOpacity
+                key={l}
+                style={[styles.option, level === l && styles.activeOption]}
+                onPress={() => { onChange(l); onClose(); }}
+              >
+                <Text style={[styles.text, level === l && styles.activeText]}>
+                  {l.charAt(0).toUpperCase() + l.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
       </TouchableOpacity>
     </Modal>
@@ -40,26 +41,34 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 8,
-    width: 240,
+    borderRadius: 24,
+    padding: 12,
+    width: '90%',
+    maxWidth: 400,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
   },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   option: {
-    paddingVertical: 14,
-    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     alignItems: 'center',
+    backgroundColor: '#F5F5F5',
   },
   activeOption: {
     backgroundColor: '#3D7A52',
   },
   text: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#555',
+    fontWeight: '500',
   },
   activeText: {
     color: '#FFFFFF',

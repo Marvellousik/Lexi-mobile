@@ -5,14 +5,15 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
-  SafeAreaView,
+  Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import UploadZone from '@/components/shared/UploadZone';
-import DocRow from '@/components/shared/DocRow';
-import PrimaryButton from '@/components/shared/PrimaryButton';
+import { UploadZone } from '@/components/shared/UploadZone';
+import { DocRow } from '@/components/shared/DocRow';
+import { PrimaryButton } from '@/components/shared/PrimaryButton';
 import { useTheme } from '@/hooks/useTheme';
 import { DocumentResult } from '@/types';
 import { text } from '@/constants/typography';
@@ -45,7 +46,7 @@ export default function FlashcardsUploadScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
       <ScrollView
         style={{ flex: 1 }}
@@ -59,7 +60,11 @@ export default function FlashcardsUploadScreen() {
           <View style={{ height: sp['6'] }} />
 
           <View style={[styles.heroCard, { backgroundColor: c.tool.flashcards }]}>
-            <Ionicons name="albums" size={48} color="#FFFFFF" />
+            <Image 
+              source={require('../../../../../../assets/flashcard.png')} 
+              style={styles.heroImage}
+              resizeMode="contain"
+            />
             <View style={styles.heroText}>
               <Text style={[styles.heroTitle, { color: '#FFFFFF' }]}>Flashcards</Text>
               <Text style={[styles.heroDesc, { color: 'rgba(255,255,255,0.9)' }]}>
@@ -68,7 +73,7 @@ export default function FlashcardsUploadScreen() {
             </View>
           </View>
 
-          <View style={{ height: sp['6'] }} />
+          <View style={{ height: sp['8'] }} />
 
           {!file ? (
             <UploadZone
@@ -91,6 +96,7 @@ export default function FlashcardsUploadScreen() {
                 fileType={file.mimeType || 'Unknown'}
                 onDismiss={() => setFile(null)}
               />
+              <View style={{ height: sp['4'] }} />
               <PrimaryButton
                 label="Submit"
                 onPress={handleSubmit}
@@ -119,17 +125,38 @@ const styles = StyleSheet.create({
   heroCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: sp['4'],
-    minHeight: 140,
+    minHeight: 160,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  heroText: { flex: 1, marginLeft: sp['3'] },
-  heroTitle: { ...text.h3 },
-  heroDesc: { ...text.bodySm, marginTop: sp['1'], lineHeight: 20 },
-  sectionLabel: { ...text.label, marginBottom: sp['2'] },
+  heroImage: {
+    width: 110,
+    height: 110,
+  },
+  heroText: { 
+    flex: 1, 
+    marginLeft: sp['3'],
+    justifyContent: 'center',
+  },
+  heroTitle: { 
+    ...text.h2,
+    fontWeight: '800',
+  },
+  heroDesc: { 
+    ...text.bodySm, 
+    marginTop: sp['1'], 
+    lineHeight: 18,
+  },
+  sectionLabel: { 
+    ...text.label, 
+    textAlign: 'center',
+    marginTop: sp['10'],
+    marginBottom: sp['4'],
+  },
 });
+

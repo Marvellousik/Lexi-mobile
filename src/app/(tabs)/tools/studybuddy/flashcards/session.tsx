@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -7,8 +8,10 @@ import * as Haptics from 'expo-haptics';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 
+const { width } = Dimensions.get('window');
+
 const FLASHCARDS = [
-  { id: '1', question: 'What was the name of the failed coup attempt led by Hitler in 1923?', answer: 'The Beer Hall Putsch.' },
+  { id: '1', question: 'What was the name of the failed coup attempt by Hitler and the Nazi Party in 1923?', answer: 'The Beer Hall Putsch.' },
   { id: '2', question: 'In which year did Hitler become Chancellor of Germany?', answer: '1933' },
 ];
 
@@ -41,7 +44,7 @@ export default function FlashcardsSessionScreen() {
   });
 
   const flipCard = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const toValue = showAnswer ? 0 : 1;
     Animated.timing(flipAnim, {
       toValue,
@@ -54,6 +57,7 @@ export default function FlashcardsSessionScreen() {
 
   const goNext = useCallback(() => {
     if (index < FLASHCARDS.length - 1) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       flipAnim.setValue(0);
       setShowAnswer(false);
       setIndex((prev) => prev + 1);
@@ -62,6 +66,7 @@ export default function FlashcardsSessionScreen() {
 
   const goPrev = useCallback(() => {
     if (index > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       flipAnim.setValue(0);
       setShowAnswer(false);
       setIndex((prev) => prev - 1);
@@ -69,26 +74,41 @@ export default function FlashcardsSessionScreen() {
   }, [index, flipAnim]);
 
   const CardFace = ({ isBack }: { isBack?: boolean }) => (
-    <View style={[styles.cardInner, { backgroundColor: '#3D7A52' }]}>
-      <View style={styles.questionIcon}>
-        <Ionicons name="help" size={24} color="#3D7A52" />
+    <View style={[styles.cardInner, { backgroundColor: c.brand.primary }]}>
+      <View style={styles.topSection}>
+        <View style={styles.questionIcon}>
+          <Ionicons name="help" size={32} color={c.brand.primary} />
+        </View>
+        <Text style={styles.counter}>{index + 1}/{FLASHCARDS.length}</Text>
       </View>
-      <Text style={styles.counter}>{index + 1}/{FLASHCARDS.length}</Text>
-      <Text style={styles.cardText} numberOfLines={6}>
-        {isBack ? card.answer : card.question}
-      </Text>
-      <TouchableOpacity style={styles.flipButton} onPress={flipCard} activeOpacity={0.9}>
-        <Text style={styles.flipButtonText}>{isBack ? 'Question' : 'Answer'}</Text>
-      </TouchableOpacity>
-      <View style={styles.waveDecoration} />
+      
+      <View style={styles.textContainer}>
+        <Text style={styles.cardText}>
+          {isBack ? card.answer : card.question}
+        </Text>
+      </View>
+      
+      <View style={styles.bottomSection}>
+        <TouchableOpacity style={styles.flipButton} onPress={flipCard} activeOpacity={0.9}>
+          <Text style={styles.flipButtonText}>{isBack ? 'Question' : 'Answer'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Blob Decorations */}
+      <View style={styles.blobContainer} pointerEvents="none">
+        <View style={styles.blob1} />
+        <View style={styles.blob2} />
+      </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top', 'bottom']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
       <View style={styles.content}>
-        <Text style={[styles.docName, { color: c.text.primary }]}>History of Hitler</Text>
+        <View style={styles.header}>
+          <Text style={[styles.docName, { color: c.text.primary }]}>History of Hitler</Text>
+        </View>
 
         <View style={styles.cardContainer}>
           <Animated.View
@@ -124,24 +144,20 @@ export default function FlashcardsSessionScreen() {
 
         <View style={styles.navRow}>
           <TouchableOpacity
-            style={styles.navButton}
+            style={[styles.navButton, index === 0 && styles.disabledNav]}
             onPress={goPrev}
-            activeOpacity={0.88}
-            accessible={true}
-            accessibilityLabel="Previous card"
-            accessibilityRole="button"
+            disabled={index === 0}
+            activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={24} color="#3D7A52" />
+            <Ionicons name="arrow-back" size={24} color={c.brand.primary} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.navButton}
+            style={[styles.navButton, index === FLASHCARDS.length - 1 && styles.disabledNav]}
             onPress={goNext}
-            activeOpacity={0.88}
-            accessible={true}
-            accessibilityLabel="Next card"
-            accessibilityRole="button"
+            disabled={index === FLASHCARDS.length - 1}
+            activeOpacity={0.7}
           >
-            <Ionicons name="arrow-forward" size={24} color="#3D7A52" />
+            <Ionicons name="arrow-forward" size={24} color={c.brand.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -154,14 +170,22 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: sp['6'],
-    paddingTop: sp['6'],
-    paddingBottom: 120,
-    alignItems: 'center',
+    paddingTop: sp['4'],
+    paddingBottom: 100, // Account for tab bar height
   },
-  docName: { ...text.h3, marginBottom: sp['6'] },
-  cardContainer: {
+  header: {
     width: '100%',
-    height: 380,
+    marginBottom: sp['6'],
+  },
+  docName: { 
+    ...text.h1,
+    fontWeight: '800',
+  },
+  cardContainer: {
+    flex: 1,
+    width: '100%',
+    minHeight: 380,
+    maxHeight: 520,
     marginBottom: sp['8'],
   },
   card: {
@@ -169,82 +193,121 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     backfaceVisibility: 'hidden',
-    shadowColor: '#3D7A52',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   cardInner: {
     flex: 1,
+    padding: sp['8'],
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: sp['6'],
     position: 'relative',
     overflow: 'hidden',
   },
+  topSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
   questionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: sp['3'],
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.5)',
+    marginBottom: sp['4'],
   },
   counter: {
-    ...text.label,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: sp['5'],
-  },
-  cardText: {
     ...text.h3,
     color: '#FFFFFF',
-    textAlign: 'center',
+    opacity: 0.9,
+  },
+  textContainer: {
     flex: 1,
-    paddingHorizontal: sp['4'],
-    maxWidth: '85%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  cardText: {
+    ...text.h2,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 32,
+  },
+  bottomSection: {
+    width: '100%',
+    alignItems: 'center',
+    zIndex: 10,
   },
   flipButton: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    paddingHorizontal: sp['7'],
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: sp['10'],
     paddingVertical: sp['3'],
     borderRadius: 50,
-    marginBottom: sp['5'],
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  flipButtonText: { ...text.buttonSm, color: '#3D7A52' },
-  waveDecoration: {
+  flipButtonText: { 
+    ...text.button, 
+    color: '#3D7A52',
+    fontWeight: '700',
+  },
+  blobContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+  },
+  blob1: {
+    position: 'absolute',
+    bottom: -30,
+    left: -40,
+    width: 240,
+    height: 140,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    transform: [{ rotate: '15deg' }],
+  },
+  blob2: {
     position: 'absolute',
     bottom: -40,
-    left: -40,
-    right: -40,
-    height: 120,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 60,
+    right: -60,
+    width: 280,
+    height: 160,
+    borderRadius: 120,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    transform: [{ rotate: '-10deg' }],
   },
   navRow: {
     flexDirection: 'row',
-    gap: sp['6'],
+    justifyContent: 'center',
+    gap: sp['8'],
   },
   navButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1.5,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
     borderColor: '#3D7A52',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  disabledNav: {
+    opacity: 0.3,
+    borderColor: '#CCCCCC',
   },
 });
+

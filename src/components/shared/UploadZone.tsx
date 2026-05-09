@@ -35,8 +35,8 @@ export default function UploadZone({ onFilePicked }: UploadZoneProps) {
         style={[
           styles.container,
           {
-            borderColor: c.brand.primary,
-            backgroundColor: c.brand.primaryLight,
+            borderColor: '#6B9E7C',
+            backgroundColor: '#EAF4EE',
           },
         ]}
         onPress={pickFile}
@@ -47,17 +47,14 @@ export default function UploadZone({ onFilePicked }: UploadZoneProps) {
         accessibilityRole="button"
         {...handlers}
       >
-        <View style={[styles.iconCircle, { backgroundColor: c.brand.primary }]}>
-          <Ionicons name="cloud-upload-outline" size={24} color="#FFFFFF" />
+        <View style={[styles.iconCircle, { backgroundColor: '#3D7A52' }]}>
+          <Ionicons name="cloud-upload" size={28} color="#FFFFFF" />
         </View>
-        <Text style={[styles.title, { color: c.brand.primary }]}>
-          Upload your document
+        <Text style={[styles.title, { color: '#3D7A52' }]}>
+          Click to upload or drag and drop
         </Text>
-        <Text style={[styles.subtitle, { color: c.text.muted }]}>
-          Tap to browse PDF, Word, or image files
-        </Text>
-        <Text style={[styles.hint, { color: c.text.muted }]}>
-          Size maximum: 50MB
+        <Text style={[styles.subtitle, { color: '#888888' }]}>
+          PDF, DOC, TXT, image (Size maximum)
         </Text>
       </TouchableOpacity>
     </Animated.View>
@@ -71,29 +68,28 @@ const styles = StyleSheet.create({
   container: {
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderRadius: 16,
-    paddingVertical: sp['10'],
+    borderRadius: 24,
+    paddingVertical: sp['12'],
     paddingHorizontal: sp['6'],
     alignItems: 'center',
-    gap: sp['3'],
+    gap: sp['4'],
   },
   iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: sp['2'],
   },
   title: {
-    ...text.h4,
+    ...(text.h4 as any),
+    fontWeight: '700',
     textAlign: 'center',
   },
   subtitle: {
-    ...text.bodySm,
+    ...(text.bodySm as any),
     textAlign: 'center',
-  },
-  hint: {
-    ...text.caption,
-    textAlign: 'center',
+    marginTop: -sp['2'],
   },
 });

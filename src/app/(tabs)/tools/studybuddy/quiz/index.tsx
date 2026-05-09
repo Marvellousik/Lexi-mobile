@@ -5,8 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
-  SafeAreaView,
+  Image,
+  TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +39,8 @@ export default function QuizUploadScreen() {
     if (!file) return;
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
+      // Simulate processing
+      await new Promise((r) => setTimeout(r, 1200));
       router.push('/(tabs)/tools/studybuddy/quiz/session');
     } finally {
       setLoading(false);
@@ -45,7 +48,7 @@ export default function QuizUploadScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
       <ScrollView
         style={{ flex: 1 }}
@@ -56,19 +59,28 @@ export default function QuizUploadScreen() {
       >
         <Animated.View style={{ opacity: fadeAnim }}>
           <Text style={[styles.pageTitle, { color: c.text.primary }]}>Quizzes</Text>
-          <View style={{ height: sp['6'] }} />
+          <View style={{ height: sp['8'] }} />
 
+          {/* Hero Card */}
           <View style={[styles.heroCard, { backgroundColor: c.tool.quiz }]}>
-            <Ionicons name="help-circle" size={48} color="#FFFFFF" />
-            <View style={styles.heroText}>
-              <Text style={[styles.heroTitle, { color: '#FFFFFF' }]}>Quizzes</Text>
-              <Text style={[styles.heroDesc, { color: 'rgba(255,255,255,0.9)' }]}>
-                Upload a document and we will automatically generate questions to test your understanding
-              </Text>
+            <View style={styles.heroContent}>
+              <View style={styles.illustrationContainer}>
+                <Image 
+                  source={require('../../../../../../assets/images/tools/quiz-hero.png')} 
+                  style={styles.heroImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.heroTextContainer}>
+                <Text style={styles.heroTitle}>Quizzes</Text>
+                <Text style={styles.heroDesc}>
+                  Upload a document and we will automatically generate questions to test your understanding of the content
+                </Text>
+              </View>
             </View>
           </View>
 
-          <View style={{ height: sp['6'] }} />
+          <View style={{ height: sp['10'] }} />
 
           {!file ? (
             <UploadZone
@@ -84,15 +96,16 @@ export default function QuizUploadScreen() {
           ) : (
             <Animated.View style={{ opacity: fadeAnim }}>
               <Text style={[styles.sectionLabel, { color: c.text.muted }]}>
-                Document uploaded
+                Document selected
               </Text>
               <DocRow
                 filename={file.name}
                 fileType={file.mimeType || 'Unknown'}
                 onDismiss={() => setFile(null)}
               />
+              <View style={{ height: sp['6'] }} />
               <PrimaryButton
-                label="Submit"
+                label="Generate Quiz"
                 onPress={handleSubmit}
                 loading={loading}
               />
@@ -109,27 +122,58 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: sp['6'],
     paddingTop: sp['6'],
-    paddingBottom: 120,
+    paddingBottom: 140,
   },
   pageTitle: {
-    ...text.h1,
-    letterSpacing: -0.5,
-    lineHeight: 34,
+    ...(text.h1 as any),
+    letterSpacing: -0.6,
+    lineHeight: 38,
   },
   heroCard: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    minHeight: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  heroContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    padding: sp['4'],
-    minHeight: 140,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    padding: sp['5'],
   },
-  heroText: { flex: 1, marginLeft: sp['3'] },
-  heroTitle: { ...text.h3 },
-  heroDesc: { ...text.bodySm, marginTop: sp['1'], lineHeight: 20 },
-  sectionLabel: { ...text.label, marginBottom: sp['2'] },
+  illustrationContainer: {
+    width: '40%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroImage: {
+    width: 120,
+    height: 120,
+  },
+  heroTextContainer: {
+    flex: 1,
+    marginLeft: sp['2'],
+  },
+  heroTitle: {
+    ...(text.h2 as any),
+    color: '#FFFFFF',
+    fontWeight: '700',
+    marginBottom: sp['2'],
+  },
+  heroDesc: {
+    ...(text.bodySm as any),
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  sectionLabel: {
+    ...(text.label as any),
+    marginBottom: sp['3'],
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
 });

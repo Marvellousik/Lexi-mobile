@@ -2,19 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
   Animated,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
-import { Ionicons } from '@expo/vector-icons';
 import UploadZone from '@/components/shared/UploadZone';
 import DocRow from '@/components/shared/DocRow';
 import PrimaryButton from '@/components/shared/PrimaryButton';
+import TtsHeroIllustration from '@/components/illustrations/TtsHeroIllustration';
 import { useTheme } from '@/hooks/useTheme';
 import { DocumentResult } from '@/types';
 import { text } from '@/constants/typography';
@@ -62,7 +61,7 @@ export default function TtsUploadScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
       <ScrollView
         style={{ flex: 1 }}
@@ -72,24 +71,31 @@ export default function TtsUploadScreen() {
         overScrollMode="never"
       >
         <Animated.View style={{ opacity: fadeAnim }}>
+          {/* Page title */}
           <Text style={[styles.pageTitle, { color: c.text.primary }]}>
-            Text To Speech
+            Text To Speech Learning Hub
           </Text>
           <View style={{ height: sp['6'] }} />
 
           {/* Hero card */}
           <View style={[styles.heroCard, { backgroundColor: c.tool.tts }]}>
-            <Ionicons name="mic" size={48} color="#3D7A52" />
+            <View style={styles.heroImageWrapper}>
+              <TtsHeroIllustration width={100} height={75} />
+            </View>
             <View style={styles.heroText}>
-              <Text style={styles.heroTitle}>Text to Speech</Text>
+              <Text style={styles.heroTitle}>
+                Text to speech{'\n'}Learning Hub
+              </Text>
               <Text style={styles.heroDesc}>
-                Convert documents to natural-sounding audio
+                Turn text into sound. Sit back, listen & watch the words light
+                up as you learn.
               </Text>
             </View>
           </View>
 
-          <View style={{ height: sp['6'] }} />
+          <View style={{ height: sp['8'] }} />
 
+          {/* Upload or result */}
           {!file ? (
             <UploadZone
               onFilePicked={(f) =>
@@ -132,24 +138,46 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   pageTitle: {
-    ...text.h1,
+    ...(text.h1 as any),
     letterSpacing: -0.5,
     lineHeight: 34,
   },
   heroCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
     borderRadius: 16,
     padding: sp['4'],
-    minHeight: 140,
+    height: 150,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 3,
+    overflow: 'hidden' as const,
   },
-  heroText: { flex: 1, marginLeft: sp['3'] },
-  heroTitle: { ...text.h3, color: '#111111' },
-  heroDesc: { ...text.bodySm, color: '#555555', marginTop: sp['1'], lineHeight: 20 },
-  sectionLabel: { ...text.label, marginBottom: sp['2'] },
+  heroImageWrapper: {
+    width: 110,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  heroText: {
+    flex: 1,
+    marginLeft: sp['3'],
+    paddingRight: sp['2'],
+  },
+  heroTitle: {
+    ...(text.h3 as any),
+    color: '#111111',
+    lineHeight: 24,
+  },
+  heroDesc: {
+    ...(text.bodySm as any),
+    color: '#555555',
+    marginTop: sp['2'],
+    lineHeight: 20,
+  },
+  sectionLabel: {
+    ...(text.label as any),
+    marginBottom: sp['2'],
+  },
 });

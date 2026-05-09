@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
+import { PrimaryButton } from '@/components/shared/PrimaryButton';
 
 const SCORE = 10;
 const TOTAL = 20;

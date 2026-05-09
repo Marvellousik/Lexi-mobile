@@ -6,14 +6,14 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import ConfidenceTooltip from '@/components/ui/ConfidenceTooltip';
-import ExportOptionsSheet from '@/components/ui/ExportOptionsSheet';
+import { ConfidenceTooltip } from '@/components/ui/ConfidenceTooltip';
+import { ExportOptionsSheet } from '@/components/ui/ExportOptionsSheet';
 import { showToast } from '@/components/ui/Toast';
 import { WordToken } from '@/types';
 import { text } from '@/constants/typography';

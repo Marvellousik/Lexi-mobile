@@ -11,7 +11,7 @@ interface UploadZoneProps {
   onFilePicked: (file: { uri: string; name: string; mimeType: string }) => void;
 }
 
-export default function UploadZone({ onFilePicked }: UploadZoneProps) {
+export function UploadZone({ onFilePicked }: UploadZoneProps) {
   const c = useTheme();
   const { animatedStyle, handlers } = useAnimatedPress(0.97, 120);
 

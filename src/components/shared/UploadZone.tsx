@@ -51,13 +51,10 @@ export default function UploadZone({ onFilePicked }: UploadZoneProps) {
           <Ionicons name="cloud-upload-outline" size={24} color="#FFFFFF" />
         </View>
         <Text style={[styles.title, { color: c.brand.primary }]}>
-          Upload your document
+          Click to upload{' '}or drag and drop
         </Text>
         <Text style={[styles.subtitle, { color: c.text.muted }]}>
-          Tap to browse PDF, Word, or image files
-        </Text>
-        <Text style={[styles.hint, { color: c.text.muted }]}>
-          Size maximum: 50MB
+          PDF, DOC, TXT, image (Size maximun)
         </Text>
       </TouchableOpacity>
     </Animated.View>
@@ -72,10 +69,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderRadius: 16,
-    paddingVertical: sp['10'],
+    paddingVertical: sp['8'],
     paddingHorizontal: sp['6'],
     alignItems: 'center',
-    gap: sp['3'],
+    gap: sp['2.5'],
   },
   iconCircle: {
     width: 56,
@@ -90,10 +87,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...text.bodySm,
-    textAlign: 'center',
-  },
-  hint: {
-    ...text.caption,
     textAlign: 'center',
   },
 });

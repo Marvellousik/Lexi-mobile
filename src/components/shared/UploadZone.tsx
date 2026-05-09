@@ -50,11 +50,11 @@ export function UploadZone({ onFilePicked }: UploadZoneProps) {
         <View style={[styles.iconCircle, { backgroundColor: '#3D7A52' }]}>
           <Ionicons name="cloud-upload" size={28} color="#FFFFFF" />
         </View>
-        <Text style={[styles.title, { color: '#3D7A52' }]}>
-          Click to upload or drag and drop
+        <Text style={[styles.title, { color: c.brand.primary }]}>
+          Click to upload{' '}or drag and drop
         </Text>
-        <Text style={[styles.subtitle, { color: '#888888' }]}>
-          PDF, DOC, TXT, image (Size maximum)
+        <Text style={[styles.subtitle, { color: c.text.muted }]}>
+          PDF, DOC, TXT, image (Size maximun)
         </Text>
       </TouchableOpacity>
     </Animated.View>
@@ -68,11 +68,11 @@ const styles = StyleSheet.create({
   container: {
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderRadius: 24,
-    paddingVertical: sp['12'],
+    borderRadius: 16,
+    paddingVertical: sp['8'],
     paddingHorizontal: sp['6'],
     alignItems: 'center',
-    gap: sp['4'],
+    gap: sp['2.5'],
   },
   iconCircle: {
     width: 64,
@@ -88,8 +88,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    ...(text.bodySm as any),
+    ...text.bodySm,
     textAlign: 'center',
-    marginTop: -sp['2'],
   },
 });

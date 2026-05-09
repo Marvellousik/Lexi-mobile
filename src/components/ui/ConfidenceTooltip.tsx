@@ -12,9 +12,9 @@ export default function ConfidenceTooltip({ visible, onClose }: Props) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
         <View style={styles.card}>
-          <Ionicons name="information-circle" size={24} color="#111" style={styles.icon} />
+          <Ionicons name="information-circle-outline" size={32} color="#000" style={styles.icon} />
           <Text style={styles.body}>
-            We may have misheard you. Please confirm if the highlighted words are correct
+            We may have misheard you.{"\n"}Please confirm if the highlighted words are correct
           </Text>
         </View>
       </TouchableOpacity>
@@ -31,23 +31,24 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    width: 280,
+    borderRadius: 24,
+    padding: 32,
+    width: 320,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
     elevation: 5,
   },
   icon: {
-    marginBottom: 12,
+    marginBottom: 20,
   },
   body: {
-    fontSize: 14,
-    color: '#555',
+    fontSize: 18,
+    color: '#444',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 26,
+    fontWeight: '500',
   },
 });

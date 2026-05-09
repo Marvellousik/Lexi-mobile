@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface Props {
   visible: boolean;
@@ -16,13 +16,13 @@ export default function ExportOptionsSheet({ visible, onDownload, onExportGoogle
         <View style={styles.sheet}>
           <TouchableOpacity style={styles.row} onPress={() => { onDownload(); onClose(); }}>
             <View style={[styles.iconBox, { backgroundColor: '#2B579A' }]}>
-              <Text style={styles.iconText}>W</Text>
+              <MaterialCommunityIcons name="microsoft-word" size={24} color="#FFF" />
             </View>
             <Text style={styles.rowText}>Download as docx</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.row} onPress={() => { onExportGoogle(); onClose(); }}>
-            <View style={[styles.iconBox, { backgroundColor: '#4285F4' }]}>
-              <Ionicons name="logo-google" size={18} color="#FFF" />
+            <View style={[styles.iconBox, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#EEE' }]}>
+              <MaterialCommunityIcons name="google-drive" size={24} color="#4285F4" />
             </View>
             <Text style={styles.rowText}>Export to Google docx</Text>
           </TouchableOpacity>

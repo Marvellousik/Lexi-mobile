@@ -20,7 +20,7 @@ interface PrimaryButtonProps {
   icon?: React.ReactNode;
 }
 
-export default function PrimaryButton({
+export function PrimaryButton({
   label,
   onPress,
   loading = false,

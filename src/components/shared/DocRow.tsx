@@ -11,7 +11,7 @@ interface DocRowProps {
   onDismiss: () => void;
 }
 
-export default function DocRow({ filename, fileType, onDismiss }: DocRowProps) {
+export function DocRow({ filename, fileType, onDismiss }: DocRowProps) {
   const c = useTheme();
 
   return (

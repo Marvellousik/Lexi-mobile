@@ -27,12 +27,12 @@ const DRAWER_CORNER_RADIUS = 24;
 
 const toolsConfig: Record<string, { activeTop: string | null; activeSub: string | null }> = {
   '/(tabs)/home': { activeTop: 'dashboard', activeSub: null },
-  '/(tabs)/tools/tts': { activeTop: 'tts', activeSub: null },
-  '/(tabs)/tools/reading': { activeTop: 'reading', activeSub: null },
-  '/(tabs)/tools/writing': { activeTop: 'writing', activeSub: null },
-  '/(tabs)/tools/studybuddy/quiz': { activeTop: 'studybuddy', activeSub: 'quiz' },
-  '/(tabs)/tools/studybuddy/flashcards': { activeTop: 'studybuddy', activeSub: 'flashcards' },
-  '/(tabs)/tools/studybuddy/chat': { activeTop: 'studybuddy', activeSub: 'chat' },
+  '/tools/tts': { activeTop: 'tts', activeSub: null },
+  '/tools/reading': { activeTop: 'reading', activeSub: null },
+  '/tools/writing': { activeTop: 'writing', activeSub: null },
+  '/tools/studybuddy/quiz': { activeTop: 'studybuddy', activeSub: 'quiz' },
+  '/tools/studybuddy/flashcards': { activeTop: 'studybuddy', activeSub: 'flashcards' },
+  '/tools/studybuddy/chat': { activeTop: 'studybuddy', activeSub: 'chat' },
 };
 
 const STUDY_BUDDY_SUBSECTION = [
@@ -279,7 +279,7 @@ export default function Sidebar() {
             isActive={isActiveTop('tts')}
             brandColor={brandColor}
             inverseText={inverseText}
-            onPress={() => handleNavigate('/(tabs)/tools/tts')}
+            onPress={() => handleNavigate('/tools/tts')}
           />
 
           <NavItem
@@ -288,7 +288,7 @@ export default function Sidebar() {
             isActive={isActiveTop('reading')}
             brandColor={brandColor}
             inverseText={inverseText}
-            onPress={() => handleNavigate('/(tabs)/tools/reading')}
+            onPress={() => handleNavigate('/tools/reading')}
           />
 
           <NavItem
@@ -297,7 +297,7 @@ export default function Sidebar() {
             isActive={isActiveTop('writing')}
             brandColor={brandColor}
             inverseText={inverseText}
-            onPress={() => handleNavigate('/(tabs)/tools/writing')}
+            onPress={() => handleNavigate('/tools/writing')}
           />
 
           {/* StudyBuddy — compact subsection */}
@@ -354,7 +354,7 @@ export default function Sidebar() {
                     ]}
                     onPress={() =>
                       handleNavigate(
-                        `/(tabs)/tools/studybuddy/${sub.key}`
+                        `/tools/studybuddy/${sub.key}`
                       )
                     }
                     activeOpacity={0.8}

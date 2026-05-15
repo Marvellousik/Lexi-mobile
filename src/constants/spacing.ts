@@ -16,6 +16,8 @@ export const sp = {
   '12': 48,
   '14': 56,
   '16': 64,
+  '20': 80, // Added this to fix the TypeScript error
+  '24': 96, // Added for future safety
 } as const;
 
 // Screen horizontal padding: ALWAYS sp['6'] = 24pt on both sides

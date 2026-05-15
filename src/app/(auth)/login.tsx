@@ -109,7 +109,6 @@ export default function LoginScreen() {
         bounces={false}
       >
         <View style={styles.logoRow}>
-          <Ionicons name="leaf" size={40} color="#3D7A52" />
           <Text style={styles.logoText}>LexiAssist</Text>
         </View>
 

@@ -1,42 +1,32 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Tabs, useRouter } from 'expo-router';
-import GlassTabBar from '@/components/layout/GlassTabBar';
-import AppHeader from '@/components/layout/AppHeader';
-import Sidebar from '@/components/layout/Sidebar';
-import { useAuthStore } from '@/stores/authStore';
+import React from 'react';
+import { Tabs } from 'expo-router';
 
 export default function TabsLayout() {
-  const router = useRouter();
-  const user = useAuthStore((s) => s.user);
-  const isAuthenticated = user !== null;
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/(auth)/login');
-    }
-  }, [isAuthenticated, router]);
-
   return (
-    <View style={styles.container}>
-      <AppHeader />
-      <View style={styles.navigatorContainer}>
-        <Tabs
-          tabBar={() => <GlassTabBar />}
-          screenOptions={{ headerShown: false }}
-        >
-          <Tabs.Screen name="home" />
-          <Tabs.Screen name="tools" />
-          <Tabs.Screen name="history" />
-          <Tabs.Screen name="profile" />
-        </Tabs>
-      </View>
-      <Sidebar />
-    </View>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+      }}
+      tabBar={() => null}
+    >
+      {/* The 4 Main Visible Tabs */}
+      <Tabs.Screen 
+        name="home" 
+        options={{ title: 'Dashboard' }} 
+      />
+      {/* CHANGED FROM 'tools' TO 'chat' */}
+      <Tabs.Screen 
+        name="chat" 
+        options={{ title: 'Chat' }} 
+      />
+      <Tabs.Screen 
+        name="history" 
+        options={{ title: 'History' }} 
+      />
+      <Tabs.Screen 
+        name="profile" 
+        options={{ title: 'Me' }} 
+      />
+    </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  navigatorContainer: { flex: 1 },
-});

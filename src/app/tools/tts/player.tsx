@@ -11,12 +11,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/hooks/useTheme';
+import { useTtsStore } from '@/stores/ttsStore';
+import { PrimaryButton } from '@/components/shared/PrimaryButton';
+import { TtsPlayerSkeleton } from '@/components/skeleton/Skeleton';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
-import {PrimaryButton} from '@/components/shared/PrimaryButton';
 
 export default function TtsPlayerScreen() {
   const c = useTheme();
+  const { result } = useTtsStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -27,6 +30,22 @@ export default function TtsPlayerScreen() {
       useNativeDriver: true,
     }).start();
   }, []);
+
+  if (!result) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+        <StatusBar style={c.isDark ? 'light' : 'dark'} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Ionicons name="headset-outline" size={48} color={c.text.muted} />
+          <Text style={[text.h3, { color: c.text.primary, marginTop: sp['4'] }]}>
+            No audio loaded
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const firstSegment = result.segments?.[0];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
@@ -47,19 +66,19 @@ export default function TtsPlayerScreen() {
           <View
             style={[
               styles.playerCard,
-              { backgroundColor: c.isDark ? '#2C2C2C' : '#FFFDE7' },
+              { backgroundColor: c.isDark ? c.ui.playerCardDark : c.ui.playerCard },
             ]}
           >
             <View style={[styles.fileChip, {
-              backgroundColor: c.isDark ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
-              borderColor: c.isDark ? 'rgba(255,255,255,0.15)' : '#E5E5E5',
+              backgroundColor: c.isDark ? c.ui.cardBg : c.ui.background,
+              borderColor: c.ui.inputBorder,
             }]}>
               <Ionicons name="document-text" size={14} color={c.brand.primary} />
               <Text style={[styles.fileChipText, { color: c.text.primary }]} numberOfLines={1}>
-                History of Hitler.pdf
+                {result.title}
               </Text>
               <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Ionicons name="close" size={16} color="#888" />
+                <Ionicons name="close" size={16} color={c.text.muted} />
               </TouchableOpacity>
             </View>
 
@@ -96,11 +115,11 @@ export default function TtsPlayerScreen() {
                 Early Life and Artistic Failure
               </Text>
               <Text style={[styles.bodyText, { color: c.text.primary }]}>
-                Adolf Hitler was born on{' '}
+                {firstSegment?.text ?? 'Adolf Hitler was born on '}
                 <Text style={{ backgroundColor: 'rgba(179,157,219,0.4)', borderRadius: 3, overflow: 'hidden' }}>
-                  April 20
+                  {firstSegment?.highlight ?? 'April 20'}
                 </Text>
-                , 1889, in Braunau am Inn, Austria-Hungary. He was the fourth of six children born to Alois Hitler and Klara Pölzl.
+                {', 1889, in Braunau am Inn, Austria-Hungary. He was the fourth of six children born to Alois Hitler and Klara Pölzl.'}
               </Text>
             </View>
           </View>
@@ -109,7 +128,7 @@ export default function TtsPlayerScreen() {
             <PrimaryButton
               label="Export Audio (MP3)"
               onPress={() => {}}
-              icon={<Ionicons name="headset" size={18} color="#FFFFFF" />}
+              icon={<Ionicons name="headset" size={18} color={c.text.inverse} />}
             />
           </View>
         </Animated.View>

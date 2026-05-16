@@ -13,9 +13,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useReadingStore } from '@/stores/readingStore';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 import DifficultySelector from '@/components/ui/DifficultySelector';
+import { ReadingReaderSkeleton } from '@/components/skeleton/Skeleton';
 
 const FONTS = ['Default', 'OpenDyslexic', 'Roboto'] as const;
 const MODES = ['letter', 'word', 'line'] as const;
@@ -28,17 +30,17 @@ const COLORS = [
 
 export default function ReadingReaderScreen() {
   const c = useTheme();
-  // FIX: Removed 'simplified' and set the default to 'beginner'
+  const { document } = useReadingStore();
+
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate'>('beginner');
   const [readingMode, setReadingMode] = useState<'letter' | 'word' | 'line'>('word');
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedFont, setSelectedFont] = useState<string>('Roboto');
-  
+
   const [showSettings, setShowSettings] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
-  const [showWordDef, setShowWordDef] = useState(false);
-  
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -58,7 +60,23 @@ export default function ReadingReaderScreen() {
     Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setShowSettings(false));
   };
 
-  const bodyContent = `Adolf Hitler's life remains one of the most studied and scrutinized periods in modern history, marking the transition from a failed artist to the architect of a global catastrophe.\nEarly Life and Artistic Failure\nAdolf Hitler was born on April 20, 1889, in the small Austrian town of Braunau am Inn. His early years were shaped by a difficult relationship with his strict father and a deep devotion to his mother. In 1907, he moved to Vienna with dreams of becoming an artist. However, he was twice rejected by the Academy of Fine Arts. During his years of poverty in Vienna, he began to adopt the extreme nationalist and antisemitic ideologies that would later define his regime.`;
+  // Guard: if no document, show empty state
+  if (!document) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
+        <StatusBar style={c.isDark ? 'light' : 'dark'} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: sp['6'] }}>
+          <Ionicons name="document-text-outline" size={48} color={c.text.muted} />
+          <Text style={[text.h3, { color: c.text.primary, marginTop: sp['4'] }]}>
+            No document loaded
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const tokens = document.tokens ?? [];
+  const displayContent = document.content ?? '';
 
   const renderContent = () => (
     <View style={styles.textContent}>
@@ -66,7 +84,7 @@ export default function ReadingReaderScreen() {
         Early Life and Artistic Failure
       </Text>
       <Text style={[styles.bodyText, { color: c.text.primary, fontFamily: selectedFont === 'Default' ? undefined : selectedFont }]}>
-        {bodyContent}
+        {displayContent}
       </Text>
     </View>
   );
@@ -74,7 +92,7 @@ export default function ReadingReaderScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      
+
       {!fullScreen ? (
         <ScrollView
           style={{ flex: 1 }}
@@ -95,23 +113,22 @@ export default function ReadingReaderScreen() {
             }]}>
               <Ionicons name="document-text" size={14} color={c.brand.primary} />
               <Text style={[styles.fileChipText, { color: c.brand.primary }]}>
-                History of Hitler.pdf
+                {document.title}
               </Text>
             </View>
 
             {/* Reader card */}
             <View style={[
-              styles.readerCard, 
+              styles.readerCard,
               { backgroundColor: selectedColor || (c.isDark ? '#2C2C2C' : '#FFFFFF') }
             ]}>
               {/* Header row */}
               <View style={styles.readerHeader}>
-                <TouchableOpacity 
-                  style={styles.difficultyPill} 
+                <TouchableOpacity
+                  style={styles.difficultyPill}
                   onPress={() => setShowDifficulty(true)}
                   activeOpacity={0.8}
                 >
-                  {/* FIX: Simplified text render */}
                   <Text style={styles.difficultyText}>
                     {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                   </Text>
@@ -136,7 +153,7 @@ export default function ReadingReaderScreen() {
             </View>
 
             {/* Word definition card (demo) */}
-            <TouchableOpacity activeOpacity={0.9} onPress={() => setShowWordDef(!showWordDef)}>
+            <TouchableOpacity activeOpacity={0.9} onPress={() => {}}>
               <View style={[styles.wordDefCard, { backgroundColor: c.isDark ? '#2C2C2C' : '#FFFFFF' }]}>
                 <View style={styles.wordDefHeader}>
                   <Text style={[styles.wordDefWord, { color: c.brand.primary }]}>Scrutinized</Text>
@@ -163,13 +180,12 @@ export default function ReadingReaderScreen() {
               <Ionicons name="contract-outline" size={24} color={c.brand.primary} />
               <Text style={[styles.minimizeText, { color: c.brand.primary }]}>Minimize</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.difficultyPill, { alignSelf: 'center' }]} 
+
+            <TouchableOpacity
+              style={[styles.difficultyPill, { alignSelf: 'center' }]}
               onPress={() => setShowDifficulty(true)}
               activeOpacity={0.8}
             >
-              {/* FIX: Simplified text render */}
               <Text style={styles.difficultyText}>
                 {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
               </Text>
@@ -180,8 +196,8 @@ export default function ReadingReaderScreen() {
               <Ionicons name="settings-outline" size={24} color={c.brand.primary} />
             </TouchableOpacity>
           </View>
-          <ScrollView 
-            style={{ flex: 1 }} 
+          <ScrollView
+            style={{ flex: 1 }}
             contentContainerStyle={styles.fullScreenScroll}
             showsVerticalScrollIndicator={false}
           >
@@ -204,7 +220,7 @@ export default function ReadingReaderScreen() {
           >
             <Pressable onPress={(e) => e.stopPropagation()}>
               <View style={styles.sheetHandle} />
-              
+
               <Text style={[styles.sheetTitle, { color: c.text.primary }]}>Reader Settings</Text>
 
               {/* Font Selection */}
@@ -263,7 +279,7 @@ export default function ReadingReaderScreen() {
                     style={[
                       styles.colorCircle,
                       color ? { backgroundColor: color } : styles.noColorCircle,
-                      selectedColor === color && styles.colorCircleActive
+                      selectedColor === color && styles.colorCircleActive,
                     ]}
                     onPress={() => setSelectedColor(color)}
                   >
@@ -340,7 +356,7 @@ const styles = StyleSheet.create({
   textContent: {},
   sectionHeading: { ...(text.h4 as any), marginBottom: sp['2'] },
   bodyText: { ...(text.body as any), lineHeight: 28 },
-  
+
   // Full Screen
   fullScreenContainer: { flex: 1 },
   fullScreenHeader: {
@@ -375,7 +391,7 @@ const styles = StyleSheet.create({
   wordDefMeaning: { ...(text.body as any), marginBottom: sp['3'] },
   wordDefLabel: { ...(text.h4 as any), marginBottom: sp['1'] },
   wordDefSynonyms: { ...(text.body as any) },
-  
+
   // Bottom sheet
   overlay: {
     flex: 1,
@@ -415,7 +431,7 @@ const styles = StyleSheet.create({
   },
   pillText: { ...(text.button as any), fontSize: 13, color: '#555' },
   pillTextActive: { color: '#FFFFFF' },
-  
+
   colorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

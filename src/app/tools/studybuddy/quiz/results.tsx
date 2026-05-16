@@ -1,23 +1,41 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useQuizStore } from '@/stores/quizStore';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
-import { PrimaryButton } from '@/components/shared/PrimaryButton';
-
-const SCORE = 10;
-const TOTAL = 20;
 
 export default function QuizResultsScreen() {
   const router = useRouter();
-  const { retake } = useLocalSearchParams();
   const c = useTheme();
+  const { score, total, reset } = useQuizStore();
   const [displayScore, setDisplayScore] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Guard: if no result, redirect back
+  if (score === null || total === null) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
+        <StatusBar style={c.isDark ? 'light' : 'dark'} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: sp['6'] }}>
+          <Ionicons name="alert-circle-outline" size={48} color={c.text.muted} />
+          <Text style={[text.h3, { color: c.text.primary, marginTop: sp['4'] }]}>
+            No quiz results
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.replace('/tools/studybuddy/quiz')}
+            style={{ marginTop: sp['6'] }}
+          >
+            <Text style={{ color: c.brand.primary, fontWeight: '700' }}>Start a new quiz</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -28,34 +46,36 @@ export default function QuizResultsScreen() {
 
     const interval = setInterval(() => {
       setDisplayScore((prev) => {
-        if (prev >= SCORE) {
+        if (prev >= score!) {
           clearInterval(interval);
-          return SCORE;
+          return score!;
         }
         return prev + 1;
       });
     }, 40);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [score]);
+
+  const handleTryAgain = () => {
+    reset();
+    router.replace('/tools/studybuddy/quiz/session');
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top', 'bottom']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          
+
           {/* IMAGE SECTION */}
           <View style={styles.avatarContainer}>
-            <Image 
-              source={retake === 'true' 
-                ? require('../../../../../assets/images/tools/quiz-result-avatar-2.png')
-                : require('../../../../../assets/images/tools/quiz-result-avatar.png')
-              } 
+            <Image
+              source={require('../../../../../assets/images/tools/quiz-result-avatar.png')}
               style={styles.avatar}
             />
           </View>
@@ -66,16 +86,18 @@ export default function QuizResultsScreen() {
           {/* SCORE SECTION - AIRY DESIGN */}
           <View style={styles.scoreBlock}>
             <Text style={[styles.youScored, { color: c.text.primary }]}>You Scored</Text>
-            
+
             <View style={{ height: sp['4'] }} />
-            
-            <Text style={[styles.scoreText, { color: '#F97316' }]}>
-              {displayScore}/{TOTAL}
+
+            <Text style={[styles.scoreText, { color: c.confidence.low }]}>
+              {displayScore}/{total}
             </Text>
-            
+
             <View style={{ height: sp['4'] }} />
-            
-            <Text style={[styles.message, { color: c.text.secondary }]}>Practice Harder!</Text>
+
+            <Text style={[styles.message, { color: c.text.secondary }]}>
+              {score! >= (total! * 0.7) ? 'Excellent work!' : 'Practice Harder!'}
+            </Text>
           </View>
 
           {/* LARGE SPACING BEFORE BUTTONS */}
@@ -84,23 +106,26 @@ export default function QuizResultsScreen() {
           {/* ACTION BUTTONS */}
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={styles.tryAgainButton}
-              onPress={() => router.replace({ pathname: '/tools/studybuddy/quiz/session', params: { retake: 'true' } })}
+              style={[styles.tryAgainButton, { borderColor: c.brand.primary }]}
+              onPress={handleTryAgain}
               activeOpacity={0.88}
             >
-              <Ionicons name="refresh" size={20} color="#3D7A52" />
-              <Text style={styles.tryAgainText}>Try Again</Text>
+              <Ionicons name="refresh" size={20} color={c.brand.primary} />
+              <Text style={[styles.tryAgainText, { color: c.brand.primary }]}>Try Again</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.checkButton}
-              onPress={() => router.push('./review')}
+              style={[
+                styles.checkButton,
+                { backgroundColor: c.brand.primary, shadowColor: c.brand.primary },
+              ]}
+              onPress={() => router.push('/tools/studybuddy/quiz/review')}
               activeOpacity={0.88}
             >
-              <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-              <Text style={styles.checkText}>Check Answers</Text>
+              <Ionicons name="checkmark-circle" size={20} color={c.text.inverse} />
+              <Text style={[styles.checkText, { color: c.text.inverse }]}>Check Answers</Text>
             </TouchableOpacity>
           </View>
-          
+
           {/* FINAL BOTTOM PADDING FOR NAVBAR SAFETY */}
           <View style={{ height: 100 }} />
         </Animated.View>
@@ -113,7 +138,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 60, 
+    paddingBottom: 60,
   },
   content: {
     flex: 1,
@@ -123,11 +148,11 @@ const styles = StyleSheet.create({
     paddingTop: sp['10'],
   },
   avatarContainer: {
-    width: 260, // Slightly larger
+    width: 260,
     height: 260,
     borderRadius: 130,
     overflow: 'hidden',
-    backgroundColor: '#FDD835', 
+    backgroundColor: '#FDD835',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
@@ -152,8 +177,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   scoreText: {
-    fontSize: 76, // Even bigger
-    lineHeight: 90, 
+    fontSize: 76,
+    lineHeight: 90,
     fontWeight: '900',
     textAlign: 'center',
     letterSpacing: -1.5,
@@ -170,42 +195,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: sp['4'],
     width: '100%',
-    marginBottom: 40, // Extra margin at the bottom of the button row
+    marginBottom: 40,
   },
   tryAgainButton: {
     flex: 1,
     height: 64,
     borderWidth: 2,
-    borderColor: '#3D7A52',
     borderRadius: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: sp['2'],
   },
-  tryAgainText: { 
-    color: '#3D7A52', 
+  tryAgainText: {
     fontSize: 17,
-    fontWeight: '700' 
+    fontWeight: '700',
   },
   checkButton: {
     flex: 1.2,
     height: 64,
-    backgroundColor: '#3D7A52',
     borderRadius: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: sp['2'],
-    shadowColor: '#3D7A52',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 8,
   },
-  checkText: { 
-    color: '#FFFFFF', 
+  checkText: {
     fontSize: 17,
-    fontWeight: '700' 
+    fontWeight: '700',
   },
 });

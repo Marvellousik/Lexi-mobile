@@ -9,20 +9,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import {UploadZone} from '@/components/shared/UploadZone';
-import {DocRow }from '@/components/shared/DocRow';
-import {PrimaryButton} from '@/components/shared/PrimaryButton';
+import { UploadZone } from '@/components/shared/UploadZone';
+import { DocRow } from '@/components/shared/DocRow';
+import { PrimaryButton } from '@/components/shared/PrimaryButton';
 import ReadingHeroIllustration from '@/components/illustrations/ReadingHeroIllustration';
 import { useTheme } from '@/hooks/useTheme';
+import { useProcessReading } from '@/hooks/queries/useReading';
+import { useReadingStore } from '@/stores/readingStore';
 import { DocumentResult } from '@/types';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
+import { SkeletonCard as SkeletonUploadZone, SkeletonButton } from '@/components/skeleton/Skeleton';
+import { showToast } from '@/components/ui/Toast';
 
 export default function ReadingUploadScreen() {
   const router = useRouter();
   const c = useTheme();
+  const process = useProcessReading();
+  const setDocument = useReadingStore((s) => s.setDocument);
   const [file, setFile] = useState<DocumentResult | null>(null);
-  const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -35,12 +40,16 @@ export default function ReadingUploadScreen() {
 
   const handleSubmit = async () => {
     if (!file) return;
-    setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
+      const data = await process.mutateAsync({
+        fileUri: file.uri,
+        fileName: file.name,
+        level: 'beginner',
+      });
+      setDocument(data);
       router.push('/tools/reading/reader');
-    } finally {
-      setLoading(false);
+    } catch {
+      showToast('Failed to process document. Please try again.', 'error');
     }
   };
 
@@ -75,8 +84,13 @@ export default function ReadingUploadScreen() {
 
           <View style={{ height: sp['8'] }} />
 
-          {/* Upload or result */}
-          {!file ? (
+          {process.isPending ? (
+            <>
+              <SkeletonUploadZone />
+              <View style={{ height: sp['6'] }} />
+              <SkeletonButton />
+            </>
+          ) : !file ? (
             <UploadZone
               onFilePicked={(f) =>
                 setFile({
@@ -100,7 +114,7 @@ export default function ReadingUploadScreen() {
               <PrimaryButton
                 label="Submit"
                 onPress={handleSubmit}
-                loading={loading}
+                loading={process.isPending}
               />
             </Animated.View>
           )}

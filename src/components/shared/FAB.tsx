@@ -7,6 +7,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/hooks/useTheme';
+
+
+const FAB_OFFSET_ABOVE_TAB_BAR = 90;
 
 interface FABProps {
   onPress: () => void;
@@ -14,6 +18,7 @@ interface FABProps {
 }
 
 export default function FAB({ onPress, icon = 'add' }: FABProps) {
+  const c = useTheme();
   const insets = useSafeAreaInsets();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -85,9 +90,11 @@ export default function FAB({ onPress, icon = 'add' }: FABProps) {
       style={[
         styles.fab,
         {
-          bottom: insets.bottom + 90,
+          bottom: insets.bottom + FAB_OFFSET_ABOVE_TAB_BAR,
           opacity: opacityAnim,
           transform: [{ scale: scaleAnim }, { scale: pressAnim }],
+          backgroundColor: c.brand.primary,
+          shadowColor: c.brand.primary,
         },
       ]}
     >
@@ -102,7 +109,7 @@ export default function FAB({ onPress, icon = 'add' }: FABProps) {
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <Ionicons name={icon as any} size={28} color="#FFFFFF" />
+          <Ionicons name={icon as any} size={28} color={c.text.inverse} />
         </Animated.View>
       </TouchableOpacity>
     </Animated.View>
@@ -116,10 +123,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#3D7A52',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#3D7A52',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 16,

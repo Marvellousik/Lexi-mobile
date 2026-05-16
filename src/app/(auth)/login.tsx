@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/auth.service';
+import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 
@@ -33,6 +34,7 @@ const parseAuthError = (err: any): string => {
 export default function LoginScreen() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
+  const c = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,8 +90,15 @@ export default function LoginScreen() {
 
   const getInputStyle = useCallback((field: string) => [
     styles.input,
-    focusedField === field && styles.inputFocused,
-  ], [focusedField]);
+    {
+      borderColor: c.ui.inputBorder,
+      backgroundColor: c.ui.background,
+    },
+    focusedField === field && {
+      borderColor: c.brand.primary,
+      backgroundColor: c.ui.inputFocusBg,
+    },
+  ], [focusedField, c]);
 
   return (
     <KeyboardAvoidingView
@@ -116,21 +125,21 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Sign in to continue your learning journey</Text>
 
         {error ? (
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={16} color="#EF4444" />
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[styles.errorContainer, { backgroundColor: c.ui.errorBg }]}>
+            <Ionicons name="alert-circle" size={16} color={c.text.danger} />
+            <Text style={[styles.errorText, { color: c.text.danger }]}>{error}</Text>
           </View>
         ) : null}
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={[styles.label, { color: c.text.primary }]}>Email</Text>
           <TextInput
             ref={emailRef}
-            style={getInputStyle('email')}
+            style={[getInputStyle('email'), { color: c.text.primary }]}
             value={email}
             onChangeText={handleEmailChange}
             placeholder="Enter your email"
-            placeholderTextColor="#888888"
+            placeholderTextColor={c.text.muted}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
@@ -145,15 +154,15 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={[styles.label, { color: c.text.primary }]}>Password</Text>
           <View style={getInputStyle('password')}>
             <TextInput
               ref={passwordRef}
-              style={styles.passwordInput}
+              style={[styles.passwordInput, { color: c.text.primary }]}
               value={password}
               onChangeText={handlePasswordChange}
               placeholder="Enter your password"
-              placeholderTextColor="#888888"
+              placeholderTextColor={c.text.muted}
               secureTextEntry={secure}
               autoComplete="password"
               returnKeyType="done"
@@ -173,18 +182,22 @@ export default function LoginScreen() {
               <Ionicons
                 name={secure ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color="#888888"
+                color={c.text.muted}
               />
             </TouchableOpacity>
           </View>
         </View>
 
         <TouchableOpacity style={styles.forgotContainer} activeOpacity={0.7}>
-          <Text style={styles.forgotText}>Forgot your password?</Text>
+          <Text style={[styles.forgotText, { color: c.brand.primary }]}>Forgot your password?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            { backgroundColor: c.brand.primary, shadowColor: c.brand.primary },
+            loading && styles.buttonDisabled,
+          ]}
           onPress={handleLogin}
           disabled={loading}
           activeOpacity={0.88}
@@ -193,41 +206,41 @@ export default function LoginScreen() {
           accessibilityRole="button"
         >
           {loading ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={c.text.inverse} size="small" />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={[styles.buttonText, { color: c.text.inverse }]}>Sign In</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.orText}>or</Text>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: c.ui.divider }]} />
+          <Text style={[styles.orText, { color: c.text.muted }]}>or</Text>
+          <View style={[styles.divider, { backgroundColor: c.ui.divider }]} />
         </View>
 
         <View style={styles.socialRow}>
           <TouchableOpacity 
-            style={styles.socialButton} 
+            style={[styles.socialButton, { borderColor: c.brand.primary }]} 
             activeOpacity={0.8}
             accessible={true}
             accessibilityRole="button"
           >
-            <Ionicons name="logo-google" size={18} color="#3D7A52" />
-            <Text style={styles.socialText}>Google</Text>
+            <Ionicons name="logo-google" size={18} color={c.brand.primary} />
+            <Text style={[styles.socialText, { color: c.brand.primary }]}>Google</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.socialButton} 
+            style={[styles.socialButton, { borderColor: c.brand.primary }]} 
             activeOpacity={0.8}
             accessible={true}
             accessibilityRole="button"
           >
-            <Ionicons name="logo-linkedin" size={18} color="#3D7A52" />
-            <Text style={styles.socialText}>LinkedIn</Text>
+            <Ionicons name="logo-linkedin" size={18} color={c.brand.primary} />
+            <Text style={[styles.socialText, { color: c.brand.primary }]}>LinkedIn</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text style={[styles.footerText, { color: c.text.secondary }]}>Don't have an account? </Text>
           <TouchableOpacity
             onPress={() => router.push('/(auth)/register')}
             activeOpacity={0.7}
@@ -235,7 +248,7 @@ export default function LoginScreen() {
             accessibilityLabel="Create account"
             accessibilityRole="link"
           >
-            <Text style={styles.footerLink}>Sign up</Text>
+            <Text style={[styles.footerLink, { color: c.brand.primary }]}>Sign up</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -246,7 +259,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#FFFFFF' 
   },
   scroll: { 
     flexGrow: 1,
@@ -264,29 +276,24 @@ const styles = StyleSheet.create({
   logoText: { 
     fontSize: 20, 
     fontWeight: '600', 
-    color: '#3D7A52' 
   },
   heading: { 
     ...text.h1, 
-    color: '#111111', 
     marginBottom: sp['1.5'] 
   },
   subtitle: { 
     ...text.body, 
-    color: '#888888', 
     marginBottom: sp['7'] 
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: sp['2'],
-    backgroundColor: '#FEF2F2',
     borderRadius: 10,
     padding: sp['3'],
     marginBottom: sp['4'],
   },
   errorText: { 
-    color: '#EF4444', 
     fontSize: 14, 
     flex: 1 
   },
@@ -295,31 +302,25 @@ const styles = StyleSheet.create({
   },
   label: { 
     ...text.label, 
-    color: '#111111', 
     marginBottom: sp['1.5'] 
   },
   input: {
     height: 52,
     borderWidth: 1.5,
-    borderColor: '#E5E5E5',
     borderRadius: 50,
     paddingHorizontal: sp['4'],
     fontSize: 16,
-    backgroundColor: '#FFFFFF',
-    color: '#111111',
     flexDirection: 'row',
     alignItems: 'center',
   },
   inputFocused: {
-    borderColor: '#3D7A52',
-    backgroundColor: '#F9FFF9', // Subtly change background instead of heavy shadows
+    // Subtly change background instead of heavy shadows
     // REMOVED elevation and shadow properties here. 
     // They cause the Android native UI thread to rebuild the view, destroying secureTextEntry focus.
   },
   passwordInput: { 
     flex: 1, 
     fontSize: 16, 
-    color: '#111111' 
   },
   forgotContainer: {
     alignItems: 'flex-end',
@@ -327,17 +328,14 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     ...text.bodySm,
-    color: '#3D7A52',
     fontWeight: '600',
   },
   button: {
     height: 52,
-    backgroundColor: '#3D7A52',
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: sp['2'],
-    shadowColor: '#3D7A52',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -348,7 +346,6 @@ const styles = StyleSheet.create({
   },
   buttonText: { 
     ...text.button, 
-    color: '#FFFFFF' 
   },
   dividerRow: { 
     flexDirection: 'row', 
@@ -358,11 +355,9 @@ const styles = StyleSheet.create({
   divider: { 
     flex: 1, 
     height: 1, 
-    backgroundColor: '#E5E5E5' 
   },
   orText: { 
     marginHorizontal: sp['3'], 
-    color: '#888888', 
     ...text.body 
   },
   socialRow: { 
@@ -373,7 +368,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 52,
     borderWidth: 1.5,
-    borderColor: '#3D7A52',
     borderRadius: 50,
     flexDirection: 'row',
     alignItems: 'center',
@@ -381,7 +375,6 @@ const styles = StyleSheet.create({
     gap: sp['2'],
   },
   socialText: { 
-    color: '#3D7A52', 
     fontSize: 15, 
     fontWeight: '500' 
   },
@@ -391,11 +384,9 @@ const styles = StyleSheet.create({
     marginTop: sp['6'] 
   },
   footerText: { 
-    color: '#888888', 
     ...text.body 
   },
   footerLink: { 
-    color: '#3D7A52', 
     ...text.body, 
     fontWeight: '600' 
   },

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAnimatedPress } from '@/hooks/useAnimatedPress';
+import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 
@@ -28,6 +29,7 @@ export function PrimaryButton({
   variant = 'default',
   icon,
 }: PrimaryButtonProps) {
+  const c = useTheme();
   const { animatedStyle, handlers } = useAnimatedPress(0.985, 100);
 
   const handlePress = () => {
@@ -43,6 +45,10 @@ export function PrimaryButton({
           styles.button,
           variant === 'pill' && styles.pill,
           (loading || disabled) && styles.disabled,
+          {
+            backgroundColor: c.brand.primary,
+            shadowColor: c.brand.primary,
+          },
         ]}
         onPress={handlePress}
         activeOpacity={0.88}
@@ -53,11 +59,11 @@ export function PrimaryButton({
         {...handlers}
       >
         {loading ? (
-          <ActivityIndicator color="#FFFFFF" size="small" />
+          <ActivityIndicator color={c.text.inverse} size="small" />
         ) : (
           <>
             {icon}
-            <Text style={[styles.text, icon ? styles.textWithIcon : null]}>{label}</Text>
+            <Text style={[styles.text, { color: c.text.inverse }, icon ? styles.textWithIcon : null]}>{label}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -72,13 +78,11 @@ const styles = StyleSheet.create({
   button: {
     height: 54,
     borderRadius: 14,
-    backgroundColor: '#3D7A52',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: sp['6'],
     flexDirection: 'row',
     gap: sp['2'],
-    shadowColor: '#3D7A52',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -93,8 +97,6 @@ const styles = StyleSheet.create({
   },
   text: {
     ...text.button,
-    color: '#FFFFFF',
-    letterSpacing: 0.1,
   },
   textWithIcon: {
     marginLeft: sp['1.5'],

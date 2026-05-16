@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAnimatedPress } from '@/hooks/useAnimatedPress';
+import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 
@@ -20,6 +21,7 @@ export default function ToolHeroCard({
   icon,
   onPress,
 }: ToolHeroCardProps) {
+  const c = useTheme();
   const { animatedStyle, handlers } = useAnimatedPress(0.97, 120);
 
   return (
@@ -35,13 +37,13 @@ export default function ToolHeroCard({
         {...handlers}
       >
         <View style={styles.iconBox}>
-          <Ionicons name={icon as any} size={40} color="#3D7A52" />
+          <Ionicons name={icon as any} size={40} color={c.brand.primary} />
         </View>
         <View style={styles.textBox}>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={[styles.title, { color: c.text.primary }]} numberOfLines={2}>
             {title}
           </Text>
-          <Text style={styles.description} numberOfLines={2}>
+          <Text style={[styles.description, { color: c.text.secondary }]} numberOfLines={2}>
             {description}
           </Text>
         </View>
@@ -81,12 +83,10 @@ const styles = StyleSheet.create({
   },
   title: {
     ...text.h4,
-    color: '#111111',
     marginBottom: sp['1'],
   },
   description: {
     ...text.caption,
-    color: '#555555',
     lineHeight: 20,
     opacity: 0.82,
   },

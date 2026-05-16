@@ -13,15 +13,20 @@ import { UploadZone } from '@/components/shared/UploadZone';
 import { DocRow } from '@/components/shared/DocRow';
 import { PrimaryButton } from '@/components/shared/PrimaryButton';
 import { useTheme } from '@/hooks/useTheme';
+import { useGenerateFlashcards } from '@/hooks/queries/useFlashcards';
+import { useFlashcardsStore } from '@/stores/flashcardsStore';
 import { DocumentResult } from '@/types';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
+import { SkeletonCard as SkeletonUploadZone, SkeletonButton } from '@/components/skeleton/Skeleton';
+import { showToast } from '@/components/ui/Toast';
 
 export default function FlashcardsUploadScreen() {
   const router = useRouter();
   const c = useTheme();
+  const generate = useGenerateFlashcards();
+  const setSession = useFlashcardsStore((s) => s.setSession);
   const [file, setFile] = useState<DocumentResult | null>(null);
-  const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,12 +39,15 @@ export default function FlashcardsUploadScreen() {
 
   const handleSubmit = async () => {
     if (!file) return;
-    setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
+      const data = await generate.mutateAsync({
+        fileUri: file.uri,
+        fileName: file.name,
+      });
+      setSession(data.sessionId, data.flashcards);
       router.push('/tools/studybuddy/flashcards/session');
-    } finally {
-      setLoading(false);
+    } catch {
+      showToast('Failed to generate flashcards. Please try again.', 'error');
     }
   };
 
@@ -57,7 +65,13 @@ export default function FlashcardsUploadScreen() {
           <Text style={[styles.pageTitle, { color: c.text.primary }]}>Flashcards</Text>
           <View style={{ height: sp['8'] }} />
 
-          {!file ? (
+          {generate.isPending ? (
+            <>
+              <SkeletonUploadZone />
+              <View style={{ height: sp['6'] }} />
+              <SkeletonButton />
+            </>
+          ) : !file ? (
             <UploadZone
               onFilePicked={(f) =>
                 setFile({
@@ -82,7 +96,7 @@ export default function FlashcardsUploadScreen() {
               <PrimaryButton
                 label="Generate Flashcards"
                 onPress={handleSubmit}
-                loading={loading}
+                loading={generate.isPending}
               />
             </Animated.View>
           )}

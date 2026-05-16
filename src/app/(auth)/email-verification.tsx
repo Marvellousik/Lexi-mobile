@@ -9,10 +9,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/hooks/useTheme';
+import { authService } from '@/services/auth.service';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 
 export default function EmailVerificationScreen() {
+  const c = useTheme();
   const router = useRouter();
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -46,15 +49,17 @@ export default function EmailVerificationScreen() {
   const handleResend = async () => {
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 600));
+      await authService.resendVerification('');
       setCountdown(60);
+    } catch {
+      // Error handled silently; user can retry
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: c.ui.background }]} showsVerticalScrollIndicator={false}>
       <Animated.View
         style={[
           styles.content,
@@ -65,21 +70,25 @@ export default function EmailVerificationScreen() {
         ]}
       >
         <View style={styles.logoRow}>
-          <Ionicons name="leaf" size={40} color="#3D7A52" />
-          <Text style={styles.logoText}>LexiAssist</Text>
+          <Ionicons name="leaf" size={40} color={c.brand.primary} />
+          <Text style={[styles.logoText, { color: c.brand.primary }]}>LexiAssist</Text>
         </View>
 
-        <View style={styles.iconCircle}>
-          <Ionicons name="mail-open" size={48} color="#3D7A52" />
+        <View style={[styles.iconCircle, { backgroundColor: c.brand.primaryLight }]}>
+          <Ionicons name="mail-open" size={48} color={c.brand.primary} />
         </View>
 
-        <Text style={styles.heading}>Email Verification</Text>
-        <Text style={styles.body}>
+        <Text style={[styles.heading, { color: c.text.primary }]}>Email Verification</Text>
+        <Text style={[styles.body, { color: c.text.secondary }]}>
           We have sent a verification link to your email address. Please check your inbox and click the link to verify your account.
         </Text>
 
         <TouchableOpacity
-          style={[styles.button, (countdown > 0 || loading) && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            { backgroundColor: c.brand.primary, shadowColor: c.brand.primary },
+            (countdown > 0 || loading) && styles.buttonDisabled,
+          ]}
           onPress={handleResend}
           disabled={countdown > 0 || loading}
           activeOpacity={0.88}
@@ -87,13 +96,13 @@ export default function EmailVerificationScreen() {
           accessibilityLabel={countdown > 0 ? `Resend email in ${countdown} seconds` : 'Resend verification email'}
           accessibilityRole="button"
         >
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { color: c.text.inverse }]}>
             {countdown > 0 ? `Resend (${countdown}s)` : 'Resend'}
           </Text>
         </TouchableOpacity>
 
         {countdown > 0 && (
-          <Text style={styles.countdown}>Link expires in {countdown}s</Text>
+          <Text style={[styles.countdown, { color: c.text.danger }]}>Link expires in {countdown}s</Text>
         )}
 
         <TouchableOpacity
@@ -103,7 +112,7 @@ export default function EmailVerificationScreen() {
           accessibilityLabel="Back to login"
           accessibilityRole="link"
         >
-          <Text style={styles.backLinkText}>Back to login</Text>
+          <Text style={[styles.backLinkText, { color: c.brand.primary }]}>Back to login</Text>
         </TouchableOpacity>
       </Animated.View>
     </ScrollView>
@@ -113,7 +122,6 @@ export default function EmailVerificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     paddingHorizontal: sp['6'],
     paddingTop: 60,
@@ -130,20 +138,18 @@ const styles = StyleSheet.create({
     gap: sp['2'],
     marginBottom: sp['10'],
   },
-  logoText: { fontSize: 20, fontWeight: '600', color: '#3D7A52' },
+  logoText: { fontSize: 20, fontWeight: '600' },
   iconCircle: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: '#EAF4EE',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: sp['6'],
   },
-  heading: { ...text.h1, color: '#111111', marginBottom: sp['3'] },
+  heading: { ...text.h1, marginBottom: sp['3'] },
   body: {
     ...text.body,
-    color: '#555555',
     textAlign: 'center',
     maxWidth: '85%',
     marginBottom: sp['8'],
@@ -152,20 +158,17 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 52,
-    backgroundColor: '#3D7A52',
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#3D7A52',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 6,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { ...text.button, color: '#FFFFFF' },
+  buttonText: { ...text.button },
   countdown: {
-    color: '#EF4444',
     ...text.body,
     marginTop: sp['3'],
   },
@@ -173,7 +176,6 @@ const styles = StyleSheet.create({
     marginTop: sp['6'],
   },
   backLinkText: {
-    color: '#3D7A52',
     ...text.body,
     fontWeight: '600',
   },

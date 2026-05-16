@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAnimatedPress } from '@/hooks/useAnimatedPress';
+import { useTheme } from '@/hooks/useTheme';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 
@@ -24,6 +25,7 @@ export default function OutlineButton({
   loading = false,
   disabled = false,
 }: OutlineButtonProps) {
+  const c = useTheme();
   const [pressed, setPressed] = useState(false);
   const { animatedStyle, handlers } = useAnimatedPress(0.98, 100);
 
@@ -39,7 +41,10 @@ export default function OutlineButton({
         style={[
           styles.button,
           (loading || disabled) && styles.disabled,
-          pressed && styles.pressed,
+          pressed && { backgroundColor: c.brand.primary + '0F' },
+          {
+            borderColor: c.brand.primary,
+          },
         ]}
         onPress={handlePress}
         activeOpacity={1}
@@ -51,9 +56,9 @@ export default function OutlineButton({
         accessibilityRole="button"
       >
         {loading ? (
-          <ActivityIndicator color="#3D7A52" size="small" />
+          <ActivityIndicator color={c.brand.primary} size="small" />
         ) : (
-          <Text style={styles.text}>{label}</Text>
+          <Text style={[styles.text, { color: c.brand.primary }]}>{label}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -68,20 +73,16 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#3D7A52',
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: sp['6'],
   },
-  pressed: {
-    backgroundColor: 'rgba(61,122,82,0.06)',
-  },
+
   disabled: {
     opacity: 0.5,
   },
   text: {
     ...text.button,
-    color: '#3D7A52',
   },
 });

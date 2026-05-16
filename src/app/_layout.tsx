@@ -6,14 +6,19 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import ToastProvider from '@/components/ui/Toast';
 import GlobalTabBar from '@/components/layout/GlobalTabBar';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { registerMockAdapter } from '@/lib/mockAdapter';
+import { useTheme } from '@/hooks/useTheme';
 
 SplashScreen.preventAutoHideAsync();
+registerMockAdapter();
 
 export default function RootLayout() {
+  const c = useTheme();
   const [appIsReady, setAppIsReady] = useState(false);
   const [splashAnimationComplete, setSplashAnimationComplete] = useState(false);
   
-  // We use two animations now: opacity and scale
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current; 
 
@@ -33,15 +38,14 @@ export default function RootLayout() {
   useEffect(() => {
     if (appIsReady) {
       SplashScreen.hideAsync().then(() => {
-        // Run both animations at the exact same time
         Animated.parallel([
           Animated.timing(fadeAnim, {
             toValue: 0,
-            duration: 600, // Faster, snappier fade
+            duration: 600,
             useNativeDriver: true,
           }),
           Animated.timing(scaleAnim, {
-            toValue: 1.15, // Subtle zoom towards the user
+            toValue: 1.15,
             duration: 600,
             useNativeDriver: true,
           })
@@ -53,45 +57,47 @@ export default function RootLayout() {
   }, [appIsReady, fadeAnim, scaleAnim]);
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top']}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="settings/index" />
-        </Stack>
-        <GlobalTabBar />
-      </SafeAreaView>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1, backgroundColor: c.ui.background }} edges={['top']}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="settings/index" />
+          </Stack>
+          <GlobalTabBar />
+        </SafeAreaView>
 
-      <StatusBar style="dark" />
-      <ToastProvider />
+        <StatusBar style={c.isDark ? 'light' : 'dark'} />
+        <ToastProvider />
 
-      {!splashAnimationComplete && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: '#FFFFFF',
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }], // Apply the zoom
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 999,
-            },
-          ]}
-        >
-          <Image
-            source={require('../../assets/splash-icon.png')}
-            style={{
-              width: '100%',
-              height: '100%',
-              resizeMode: 'contain',
-            }}
-          />
-        </Animated.View>
-      )}
-    </SafeAreaProvider>
+        {!splashAnimationComplete && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: c.ui.background,
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 999,
+              },
+            ]}
+          >
+            <Image
+              source={require('../../assets/splash-icon.png')}
+              style={{
+                width: '100%',
+                height: '100%',
+                resizeMode: 'contain',
+              }}
+            />
+          </Animated.View>
+        )}
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }

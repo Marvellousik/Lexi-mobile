@@ -5,6 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
+import { text } from '@/constants/typography';
+import { sp } from '@/constants/spacing';
 
 const TabIcon = ({ routeName, color }: { routeName: string; color: string }) => {
   switch (routeName) {
@@ -59,12 +62,13 @@ export default function GlobalTabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
+  const c = useTheme();
 
-  // Hide when not authenticated
   if (!user) return null;
-
-  // Hide on auth screens
   if (AUTH_PATHS.includes(pathname)) return null;
+
+  const activeColor = c.brand.primaryDark;
+  const inactiveColor = c.text.secondary;
 
   const renderContent = () => (
     <View style={styles.tabContent}>
@@ -80,9 +84,6 @@ export default function GlobalTabBar() {
           }
         };
 
-        const activeColor = '#2B5D39';
-        const inactiveColor = '#49454F';
-
         return (
           <TouchableOpacity
             key={tab.name}
@@ -92,7 +93,10 @@ export default function GlobalTabBar() {
             style={styles.tabItem}
             activeOpacity={0.8}
           >
-            <View style={[styles.iconPill, isFocused && styles.activePill]}>
+            <View style={[
+              styles.iconPill,
+              isFocused && { backgroundColor: c.brand.primaryMuted }
+            ]}>
               <TabIcon routeName={tab.name} color={isFocused ? activeColor : inactiveColor} />
             </View>
             <Text style={[styles.labelText, { color: isFocused ? activeColor : inactiveColor }]}>
@@ -105,13 +109,16 @@ export default function GlobalTabBar() {
   );
 
   return (
-    <View style={[styles.container, { bottom: Math.max(insets.bottom, 16) }]}>
+    <View style={[styles.container, { bottom: Math.max(insets.bottom, sp['4']) }]}>
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={80} tint="light" style={styles.blurContainer}>
+        <BlurView intensity={80} tint={c.isDark ? 'dark' : 'light'} style={styles.blurContainer}>
           {renderContent()}
         </BlurView>
       ) : (
-        <View style={styles.androidFallback}>
+        <View style={[
+          styles.androidFallback,
+          { backgroundColor: c.isDark ? 'rgba(26,26,26,0.95)' : 'rgba(255,255,255,0.95)' }
+        ]}>
           {renderContent()}
         </View>
       )}
@@ -122,32 +129,31 @@ export default function GlobalTabBar() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    borderRadius: 24,
+    left: sp['5'],
+    right: sp['5'],
+    borderRadius: sp['6'],
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: sp['2.5'] },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
+    shadowRadius: sp['5'],
     elevation: 10,
-    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(128,128,128,0.15)',
   },
   blurContainer: {
     flex: 1,
   },
   androidFallback: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
   },
   tabContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: sp['3'],
+    paddingVertical: sp['3'],
   },
   tabItem: {
     flex: 1,
@@ -157,17 +163,13 @@ const styles = StyleSheet.create({
   iconPill: {
     width: 56,
     height: 32,
-    borderRadius: 16,
+    borderRadius: sp['4'],
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: sp['1'],
     overflow: 'hidden',
   },
-  activePill: {
-    backgroundColor: '#C3D9C9',
-  },
   labelText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...text.tabLabel,
   },
 });

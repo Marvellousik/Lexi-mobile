@@ -87,7 +87,7 @@ function SettingRow({
         accessibilityState={{ selected: item.toggleValue }}
         {...handlers}
       >
-        <View style={[styles.iconContainer, { backgroundColor: 'rgba(61,122,82,0.1)' }]}>
+        <View style={[styles.iconContainer, { backgroundColor: c.brand.primary + '1A' }]}>
           <Ionicons name={item.icon as any} size={20} color={c.brand.primary} />
         </View>
         <Text style={[styles.rowText, { color: c.text.primary }]}>{item.label}</Text>

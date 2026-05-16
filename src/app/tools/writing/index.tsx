@@ -16,16 +16,18 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
-import ConfidenceTooltip  from '@/components/ui/ConfidenceTooltip';
-import  ExportOptionsSheet  from '@/components/ui/ExportOptionsSheet';
+import { useCleanWriting } from '@/hooks/queries/useWriting';
+import ConfidenceTooltip from '@/components/ui/ConfidenceTooltip';
+import ExportOptionsSheet from '@/components/ui/ExportOptionsSheet';
 import { showToast } from '@/components/ui/Toast';
 import { WordToken } from '@/types';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
+import { SkeletonText, SkeletonButton } from '@/components/skeleton/Skeleton';
 
 const MOCK_TEXT: WordToken[] = [
   { word: 'Adolf ', confidence: 'high' },
-  { word: 'Hitler’s ', confidence: 'high' },
+  { word: 'Hitler\u2019s ', confidence: 'high' },
   { word: 'life ', confidence: 'high' },
   { word: 'remains ', confidence: 'high' },
   { word: 'one ', confidence: 'high' },
@@ -86,6 +88,8 @@ const COLORS = [
 export default function WritingAssistantScreen() {
   const c = useTheme();
   const router = useRouter();
+  const cleanMutation = useCleanWriting();
+
   const [confidence, setConfidence] = useState<'high' | 'low'>('low');
   const [copied, setCopied] = useState(false);
   const [isRecording, setIsRecording] = useState(true);
@@ -117,17 +121,14 @@ export default function WritingAssistantScreen() {
     }
   }, [showSettings]);
 
-  const handleCleanText = () => {
-    // Simulated AI cleaning: Ensure proper capitalization and spacing
-    const cleaned = transcriptText
-      .trim()
-      .replace(/(^\w|\.\s+\w)/gm, (m) => m.toUpperCase()) // Capitalize sentences
-      .replace(/\s+/g, ' ') // Remove extra spaces
-      .split('. ')
-      .join('.\n\n'); // Add double line breaks for structure
-    
-    setTranscriptText(cleaned);
-    showToast('Text cleaned and structured', 'success');
+  const handleCleanText = async () => {
+    try {
+      const result = await cleanMutation.mutateAsync({ text: transcriptText });
+      setTranscriptText(result.cleanedText);
+      showToast('Text cleaned and structured', 'success');
+    } catch {
+      showToast('Failed to clean text. Please try again.', 'error');
+    }
   };
 
   const handleCopy = async () => {
@@ -144,7 +145,7 @@ export default function WritingAssistantScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
-      
+
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}
@@ -152,12 +153,12 @@ export default function WritingAssistantScreen() {
         bounces={true}
         overScrollMode="never"
       >
-          <View style={styles.titleRow}>
-            <Text style={[styles.pageTitle, { color: c.text.primary }]}>Writing Assistant</Text>
-            <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.topSettings}>
-              <Ionicons name="settings-outline" size={24} color={c.brand.primary} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.titleRow}>
+          <Text style={[styles.pageTitle, { color: c.text.primary }]}>Writing Assistant</Text>
+          <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.topSettings}>
+            <Ionicons name="settings-outline" size={24} color={c.brand.primary} />
+          </TouchableOpacity>
+        </View>
         <View style={{ height: sp['6'] }} />
         <View style={[styles.card, { backgroundColor: c.ui.cardBg }]}>
           <View style={styles.cardHeader}>
@@ -175,22 +176,29 @@ export default function WritingAssistantScreen() {
               <View style={{ marginRight: 12 }}>
                 <MaterialCommunityIcons name="waveform" size={22} color="#6B9E7C" />
               </View>
-              <TouchableOpacity 
-                style={styles.cleanButton} 
+              <TouchableOpacity
+                style={styles.cleanButton}
                 onPress={handleCleanText}
                 activeOpacity={0.8}
+                disabled={cleanMutation.isPending}
               >
-                <Text style={styles.cleanText}>Clean and Structure</Text>
+                <Text style={styles.cleanText}>
+                  {cleanMutation.isPending ? 'Cleaning...' : 'Clean and Structure'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.transcript}>
-            {isEditing ? (
+            {cleanMutation.isPending ? (
+              <View style={{ gap: 10, paddingVertical: 20 }}>
+                <SkeletonText lines={8} lineHeight={16} />
+              </View>
+            ) : isEditing ? (
               <TextInput
                 style={[
                   styles.editor,
-                  { 
+                  {
                     color: c.text.primary,
                     fontFamily: selectedFont === 'Default' ? undefined : selectedFont,
                   }
@@ -249,19 +257,19 @@ export default function WritingAssistantScreen() {
             <Text style={styles.pillText}>Export</Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* Controls */}
         <View style={styles.controlsContainer}>
           {isRecording ? (
             <View style={styles.controlsRow}>
-              <TouchableOpacity 
-                style={styles.controlCircle} 
+              <TouchableOpacity
+                style={styles.controlCircle}
                 onPress={() => setIsRecording(false)}
                 activeOpacity={0.75}
               >
                 <Ionicons name="pause" size={36} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.controlCircle}
                 onPress={() => setIsRecording(false)}
                 activeOpacity={0.75}
@@ -270,7 +278,7 @@ export default function WritingAssistantScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.controlCircle, styles.largeMic]}
               onPress={() => setIsRecording(true)}
               activeOpacity={0.75}
@@ -288,11 +296,11 @@ export default function WritingAssistantScreen() {
         animationType="none"
         onRequestClose={() => setShowSettings(false)}
       >
-        <Pressable 
-          style={styles.modalOverlay} 
+        <Pressable
+          style={styles.modalOverlay}
           onPress={() => setShowSettings(false)}
         >
-          <Animated.View 
+          <Animated.View
             style={[
               styles.settingsSheet,
               { transform: [{ translateY: slideAnim }] }
@@ -374,7 +382,7 @@ export default function WritingAssistantScreen() {
               ))}
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.applyButton}
               onPress={() => setShowSettings(false)}
             >
@@ -434,10 +442,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: sp['6'],
   },
-  readerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -448,13 +452,14 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
   },
-  confidenceText: { 
-    ...(text.caption as any), 
+  confidenceText: {
+    ...(text.caption as any),
     fontWeight: '600' as const,
     fontSize: 13,
   },
-  waveformPlaceholder: {
-    flex: 1,
+  readerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   cleanButton: {
     backgroundColor: '#6B9E7C',
@@ -501,7 +506,7 @@ const styles = StyleSheet.create({
     borderRadius: 27,
   },
   pillText: { color: '#3D7A52', ...(text.buttonSm as any), fontWeight: '700' as const, fontSize: 14 },
-  
+
   controlsContainer: {
     alignItems: 'center',
     justifyContent: 'center',

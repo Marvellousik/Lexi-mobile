@@ -67,7 +67,10 @@ export default function ProfileScreen() {
         ))}
 
         <TouchableOpacity
-          style={[styles.logoutRow, { backgroundColor: c.text.danger }]}
+          style={[
+            styles.logoutRow,
+            { backgroundColor: c.text.danger, shadowColor: c.text.danger },
+          ]}
           onPress={handleLogout}
           activeOpacity={0.88}
           accessible={true}
@@ -106,7 +109,7 @@ function MenuRow({
         accessibilityRole="button"
         {...handlers}
       >
-        <View style={[styles.iconContainer, { backgroundColor: 'rgba(61,122,82,0.1)' }]}>
+        <View style={[styles.iconContainer, { backgroundColor: c.brand.primary + '1A' }]}>
           <Ionicons name={icon as any} size={20} color={c.brand.primary} />
         </View>
         <Text style={[styles.rowText, { color: c.text.primary }]}>{label}</Text>
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 28, fontWeight: '700' },
   name: { ...text.h3, marginBottom: sp['1'] },
-  email: { ...text.body, color: '#888888' },
+  email: { ...text.body },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -159,7 +162,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginTop: sp['6'],
     justifyContent: 'center',
-    shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

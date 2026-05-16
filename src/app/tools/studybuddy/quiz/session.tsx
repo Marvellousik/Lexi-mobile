@@ -7,43 +7,52 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
-// ADDED: Correct import for SafeAreaView to prevent the app from crashing
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useQuizStore } from '@/stores/quizStore';
+import { useSubmitQuiz } from '@/hooks/queries/useQuiz';
 import * as Haptics from 'expo-haptics';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
-
-const QUESTIONS = [
-  {
-    id: '1',
-    question: 'In which year was Adolf Hitler born?',
-    options: ['1887', '1888', '1889', '1890', '1891'],
-    correctAnswerIndex: 2,
-  },
-  {
-    id: '2',
-    question: 'Where was Adolf Hitler born?',
-    options: ['Berlin', 'Vienna', 'Braunau am Inn', 'Munich', 'Salzburg'],
-    correctAnswerIndex: 2,
-  },
-];
+import { showToast } from '@/components/ui/Toast';
+import { QuizSessionSkeleton } from '@/components/skeleton/Skeleton';
 
 export default function QuizSessionScreen() {
   const router = useRouter();
-  const { retake } = useLocalSearchParams();
   const c = useTheme();
+  const { questions, answers, setAnswer, setResult } = useQuizStore();
+  const submit = useSubmitQuiz();
+
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<(number | null)[]>(Array(QUESTIONS.length).fill(null));
   const progressAnim = useRef(new Animated.Value(0)).current;
 
-  const question = QUESTIONS[currentIndex];
-  const total = QUESTIONS.length;
+  const question = questions[currentIndex];
+  const total = questions.length;
   const isLast = currentIndex === total - 1;
+
+  // Guard: if no session data, redirect back
+  if (!question) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
+        <StatusBar style={c.isDark ? 'light' : 'dark'} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: sp['6'] }}>
+          <Ionicons name="alert-circle-outline" size={48} color={c.text.muted} />
+          <Text style={[text.h3, { color: c.text.primary, marginTop: sp['4'] }]}>
+            No active quiz
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.replace('/tools/studybuddy/quiz')}
+            style={{ marginTop: sp['6'] }}
+          >
+            <Text style={{ color: c.brand.primary, fontWeight: '700' }}>Start a new quiz</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   React.useEffect(() => {
     Animated.spring(progressAnim, {
@@ -52,31 +61,35 @@ export default function QuizSessionScreen() {
       tension: 100,
       useNativeDriver: false,
     }).start();
-  }, [currentIndex]);
+  }, [currentIndex, total]);
 
   const handleSelect = (index: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedOption(index);
-    const newAnswers = [...answers];
-    newAnswers[currentIndex] = index;
-    setAnswers(newAnswers);
+    setAnswer(question.id, index);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (isLast) {
-      router.push({ pathname: '/tools/studybuddy/quiz/results', params: { retake: retake || 'false' } });
+      try {
+        const sessionId = useQuizStore.getState().sessionId!;
+        const result = await submit.mutateAsync({ sessionId, answers });
+        setResult(result.score, result.total);
+        router.push('/tools/studybuddy/quiz/results');
+      } catch {
+        showToast('Failed to submit quiz. Please try again.', 'error');
+      }
     } else {
       setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(answers[currentIndex + 1] ?? null);
     }
   };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
-      setSelectedOption(answers[currentIndex - 1] ?? null);
     }
   };
+
+  const selectedOption = answers[question.id] ?? null;
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
@@ -103,7 +116,7 @@ export default function QuizSessionScreen() {
           <Text style={[styles.questionLabel, { color: c.brand.primary }]}>
             Question {currentIndex + 1}/{total}
           </Text>
-          <View style={[styles.progressTrack, { backgroundColor: '#E5E5E5' }]}>
+          <View style={[styles.progressTrack, { backgroundColor: c.ui.inputBorder }]}>
             <Animated.View
               style={[
                 styles.progressFill,
@@ -124,7 +137,11 @@ export default function QuizSessionScreen() {
             key={index}
             style={[
               styles.option,
-              selectedOption === index && styles.optionSelected,
+              selectedOption === index && {
+                borderColor: c.brand.primary,
+                borderWidth: 2,
+                backgroundColor: c.brand.primaryLight,
+              },
             ]}
             onPress={() => handleSelect(index)}
             activeOpacity={0.9}
@@ -156,14 +173,21 @@ export default function QuizSessionScreen() {
             </TouchableOpacity>
           )}
           <TouchableOpacity
-            style={[styles.nextButton, currentIndex === 0 && { flex: 1 }]}
+            style={[
+              styles.nextButton,
+              currentIndex === 0 && { flex: 1 },
+              submit.isPending && { opacity: 0.7 },
+            ]}
             onPress={handleNext}
             activeOpacity={0.88}
+            disabled={submit.isPending}
             accessible={true}
             accessibilityLabel={isLast ? 'Finish quiz' : 'Next question'}
             accessibilityRole="button"
           >
-            <Text style={styles.nextText}>{isLast ? 'Finish' : 'Next'}</Text>
+            <Text style={styles.nextText}>
+              {submit.isPending ? 'Submitting...' : isLast ? 'Finish' : 'Next'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -208,11 +232,9 @@ const styles = StyleSheet.create({
   option: {
     minHeight: 56,
     borderWidth: 1.5,
-    borderColor: '#E5E5E5',
     borderRadius: 12,
     padding: sp['4'],
     marginBottom: sp['2.5'],
-    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -221,11 +243,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
-  },
-  optionSelected: {
-    borderColor: '#3D7A52',
-    borderWidth: 2,
-    backgroundColor: '#F0F7F3',
   },
   optionText: { ...text.body, fontWeight: '500' },
   buttonRow: {
@@ -237,24 +254,21 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 54,
     borderWidth: 1.5,
-    borderColor: '#3D7A52',
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  prevText: { color: '#3D7A52', ...text.button },
+  prevText: { ...text.button },
   nextButton: {
     flex: 1,
     height: 54,
-    backgroundColor: '#3D7A52',
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#3D7A52',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 6,
   },
-  nextText: { color: '#FFFFFF', ...text.button },
+  nextText: { ...text.button },
 });

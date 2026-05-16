@@ -6,25 +6,28 @@ import {
   ScrollView,
   Animated,
   Image,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
 import { UploadZone } from '@/components/shared/UploadZone';
 import { DocRow } from '@/components/shared/DocRow';
 import { PrimaryButton } from '@/components/shared/PrimaryButton';
 import { useTheme } from '@/hooks/useTheme';
+import { useGenerateQuiz } from '@/hooks/queries/useQuiz';
+import { useQuizStore } from '@/stores/quizStore';
 import { DocumentResult } from '@/types';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
+import { SkeletonCard as SkeletonUploadZone, SkeletonButton } from '@/components/skeleton/Skeleton';
+import { showToast } from '@/components/ui/Toast';
 
 export default function QuizUploadScreen() {
   const router = useRouter();
   const c = useTheme();
+  const generate = useGenerateQuiz();
+  const setSession = useQuizStore((s) => s.setSession);
   const [file, setFile] = useState<DocumentResult | null>(null);
-  const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -37,13 +40,15 @@ export default function QuizUploadScreen() {
 
   const handleSubmit = async () => {
     if (!file) return;
-    setLoading(true);
     try {
-      // Simulate processing
-      await new Promise((r) => setTimeout(r, 1200));
+      const data = await generate.mutateAsync({
+        fileUri: file.uri,
+        fileName: file.name,
+      });
+      setSession(data.sessionId, data.questions);
       router.push('/tools/studybuddy/quiz/session');
-    } finally {
-      setLoading(false);
+    } catch {
+      showToast('Failed to generate quiz. Please try again.', 'error');
     }
   };
 
@@ -65,14 +70,14 @@ export default function QuizUploadScreen() {
           <View style={[styles.heroCard, { backgroundColor: c.tool.quiz }]}>
             <View style={styles.heroContent}>
               <View style={styles.illustrationContainer}>
-                <Image 
-                  source={require('../../../../../assets/images/tools/quiz-hero.png')} 
+                <Image
+                  source={require('../../../../../assets/images/tools/quiz-hero.png')}
                   style={styles.heroImage}
                   resizeMode="contain"
                 />
               </View>
               <View style={styles.heroTextContainer}>
-                <Text style={styles.heroTitle}>Quizzes</Text>
+                <Text style={[styles.heroTitle, { color: c.text.inverse }]}>Quizzes</Text>
                 <Text style={styles.heroDesc}>
                   Upload a document and we will automatically generate questions to test your understanding of the content
                 </Text>
@@ -82,7 +87,13 @@ export default function QuizUploadScreen() {
 
           <View style={{ height: sp['10'] }} />
 
-          {!file ? (
+          {generate.isPending ? (
+            <>
+              <SkeletonUploadZone />
+              <View style={{ height: sp['6'] }} />
+              <SkeletonButton />
+            </>
+          ) : !file ? (
             <UploadZone
               onFilePicked={(f) =>
                 setFile({
@@ -107,7 +118,7 @@ export default function QuizUploadScreen() {
               <PrimaryButton
                 label="Generate Quiz"
                 onPress={handleSubmit}
-                loading={loading}
+                loading={generate.isPending}
               />
             </Animated.View>
           )}
@@ -160,7 +171,6 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     ...(text.h2 as any),
-    color: '#FFFFFF',
     fontWeight: '700',
     marginBottom: sp['2'],
   },

@@ -35,8 +35,8 @@ export function UploadZone({ onFilePicked }: UploadZoneProps) {
         style={[
           styles.container,
           {
-            borderColor: '#6B9E7C',
-            backgroundColor: '#EAF4EE',
+            borderColor: c.brand.primaryTint,
+            backgroundColor: c.brand.primaryLight,
           },
         ]}
         onPress={pickFile}
@@ -47,8 +47,8 @@ export function UploadZone({ onFilePicked }: UploadZoneProps) {
         accessibilityRole="button"
         {...handlers}
       >
-        <View style={[styles.iconCircle, { backgroundColor: '#3D7A52' }]}>
-          <Ionicons name="cloud-upload" size={28} color="#FFFFFF" />
+        <View style={[styles.iconCircle, { backgroundColor: c.brand.primary }]}>
+          <Ionicons name="cloud-upload" size={28} color={c.text.inverse} />
         </View>
         <Text style={[styles.title, { color: c.brand.primary }]}>
           Click to upload{' '}or drag and drop

@@ -7,25 +7,28 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
-// Newly added import to fix the crash
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
-import {UploadZone} from '@/components/shared/UploadZone';
-import {DocRow} from '@/components/shared/DocRow';
-import {PrimaryButton} from '@/components/shared/PrimaryButton';
+import { UploadZone } from '@/components/shared/UploadZone';
+import { DocRow } from '@/components/shared/DocRow';
+import { PrimaryButton } from '@/components/shared/PrimaryButton';
 import { useTheme } from '@/hooks/useTheme';
-import type { DocumentResult } from '@/types'; // Added 'type' keyword
+import { useProcessTts } from '@/hooks/queries/useTts';
+import { useTtsStore } from '@/stores/ttsStore';
+import { DocumentResult } from '@/types';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
+import { SkeletonCard as SkeletonUploadZone, SkeletonButton } from '@/components/skeleton/Skeleton';
+import { showToast } from '@/components/ui/Toast';
 
 export default function TtsUploadScreen() {
   const router = useRouter();
   const c = useTheme();
+  const process = useProcessTts();
+  const setResult = useTtsStore((s) => s.setResult);
   const [file, setFile] = useState<DocumentResult | null>(null);
-  const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -36,34 +39,22 @@ export default function TtsUploadScreen() {
     }).start();
   }, []);
 
-  const pickDocument = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'application/msword', 'text/plain', 'image/*'],
-    });
-    if (!result.canceled && result.assets && result.assets[0]) {
-      const asset = result.assets[0];
-      setFile({
-        uri: asset.uri,
-        name: asset.name,
-        mimeType: asset.mimeType,
-        size: asset.size,
-      });
-    }
-  };
-
   const handleSubmit = async () => {
     if (!file) return;
-    setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
+      const data = await process.mutateAsync({
+        fileUri: file.uri,
+        fileName: file.name,
+      });
+      setResult(data);
       router.push('/tools/tts/player');
-    } finally {
-      setLoading(false);
+    } catch {
+      showToast('Failed to process document. Please try again.', 'error');
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
       <ScrollView
         style={{ flex: 1 }}
@@ -80,7 +71,7 @@ export default function TtsUploadScreen() {
 
           {/* Hero card */}
           <View style={[styles.heroCard, { backgroundColor: c.tool.tts }]}>
-            <Ionicons name="mic" size={48} color="#3D7A52" />
+            <Ionicons name="mic" size={48} color={c.brand.primary} />
             <View style={styles.heroText}>
               <Text style={styles.heroTitle}>Text to Speech</Text>
               <Text style={styles.heroDesc}>
@@ -91,7 +82,13 @@ export default function TtsUploadScreen() {
 
           <View style={{ height: sp['6'] }} />
 
-          {!file ? (
+          {process.isPending ? (
+            <>
+              <SkeletonUploadZone />
+              <View style={{ height: sp['6'] }} />
+              <SkeletonButton />
+            </>
+          ) : !file ? (
             <UploadZone
               onFilePicked={(f) =>
                 setFile({
@@ -115,7 +112,7 @@ export default function TtsUploadScreen() {
               <PrimaryButton
                 label="Submit"
                 onPress={handleSubmit}
-                loading={loading}
+                loading={process.isPending}
               />
             </Animated.View>
           )}

@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/hooks/useTheme';
 import HeartIcon from '../../../assets/3dicons-heart-dynamic-color.svg';
 
 export function FeedbackBanner() {
+  const c = useTheme();
   return (
     <TouchableOpacity activeOpacity={0.9}>
       <LinearGradient 
@@ -17,7 +19,7 @@ export function FeedbackBanner() {
         </View>
         
         <View style={styles.textContainer}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: c.text.inverse }]}>
             Enjoying <Text style={styles.brandText}>LexiAssist</Text>?
           </Text>
           <Text style={styles.subtitle}>
@@ -50,7 +52,6 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 18, 
     fontWeight: '700', 
-    color: '#FFFFFF' 
   },
   brandText: { 
     color: '#A5D6A7' 

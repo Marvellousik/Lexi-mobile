@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,13 +17,14 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
+import { useSendChatMessage } from '@/hooks/queries/useChat';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 import { showToast } from '@/components/ui/Toast';
 import { ChatMessage, DocumentResult } from '@/types';
+import { ChatConversationSkeleton } from '@/components/skeleton/Skeleton';
 import * as Haptics from 'expo-haptics';
 
-// Tab bar is absolutely positioned; we must pad below it
 const TAB_BAR_HEIGHT = 70;
 
 const INITIAL_MESSAGES: ChatMessage[] = [
@@ -34,36 +35,20 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   },
 ];
 
-/**
- * ChatConversationScreen - Enterprise Grade
- *
- * Professional chat interface inspired by Claude and ChatGPT.
- * Design principles:
- * - Clean, spacious message layout with clear role differentiation
- * - Smooth typing indicators and send animations
- * - Message actions (copy, regenerate) accessible via long-press or buttons
- * - Input bar stays anchored with smooth keyboard transitions
- * - Full theme integration with zero hardcoded colors
- * - All callbacks memoized for performance
- */
 export default function ChatConversationScreen() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const { message } = useLocalSearchParams<{ message?: string }>();
   const scrollRef = useRef<ScrollView>(null);
+  const sendMessage = useSendChatMessage();
 
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState(message || '');
   const [attachment, setAttachment] = useState<DocumentResult | null>(null);
   const [focused, setFocused] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Send button animation
   const sendOpacity = useRef(new Animated.Value(0)).current;
   const sendScale = useRef(new Animated.Value(0.8)).current;
-
-  // Scroll-to-bottom animation
-  const scrollAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -81,6 +66,7 @@ export default function ChatConversationScreen() {
     ]).start();
   }, [input, sendOpacity, sendScale]);
 
+  // Handle initial message from empty-state screen
   useEffect(() => {
     if (message) {
       const userMsg: ChatMessage = {
@@ -89,7 +75,24 @@ export default function ChatConversationScreen() {
         content: message,
       };
       setMessages((prev) => [...prev, userMsg]);
-      simulateResponse();
+      sendMessage.mutate(
+        { message },
+        {
+          onSuccess: (data) => {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: data.messageId,
+                role: data.role,
+                content: data.content,
+              },
+            ]);
+          },
+          onError: () => {
+            showToast('Failed to get response. Please try again.', 'error');
+          },
+        }
+      );
     }
   }, [message]);
 
@@ -99,6 +102,10 @@ export default function ChatConversationScreen() {
     }, 100);
   }, []);
 
+  useEffect(() => {
+    scrollToEnd();
+  }, [messages, sendMessage.isPending, scrollToEnd]);
+
   const handleFocus = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setFocused(true);
@@ -106,47 +113,48 @@ export default function ChatConversationScreen() {
 
   const handleBlur = useCallback(() => setFocused(false), []);
   const handleChangeText = useCallback((text: string) => setInput(text), []);
-
   const handleClearAttachment = useCallback(() => {
     setAttachment(null);
   }, []);
-
-  const simulateResponse = useCallback(() => {
-    setIsLoading(true);
-    scrollToEnd();
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content:
-            'I can help you with that! Based on your request, here are the key points:\n\n1. **Historical Context**: Understanding the timeline and major events\n2. **Key Figures**: Important people and their roles\n3. **Impact Analysis**: How it affected subsequent events\n4. **Study Tips**: Best ways to memorize and understand this topic\n\nWould you like me to create flashcards or a quiz based on this?',
-        },
-      ]);
-    }, 2000);
-  }, [scrollToEnd]);
 
   const handleSend = useCallback(async () => {
     if (!input.trim() && !attachment) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const newMsg: ChatMessage = {
+    const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: input,
       attachment: attachment || undefined,
     };
 
-    setMessages((prev) => [...prev, newMsg]);
+    const msgToSend = input.trim();
+    const fileUri = attachment?.uri;
+
+    setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setAttachment(null);
 
-    simulateResponse();
-  }, [input, attachment, simulateResponse]);
+    sendMessage.mutate(
+      { message: msgToSend, fileUri },
+      {
+        onSuccess: (data) => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: data.messageId,
+              role: data.role,
+              content: data.content,
+            },
+          ]);
+        },
+        onError: () => {
+          showToast('Failed to get response. Please try again.', 'error');
+        },
+      }
+    );
+  }, [input, attachment, sendMessage]);
 
   const inputBorderColor = focused ? c.brand.primary : c.ui.inputBorder;
   const inputBgColor = focused ? c.ui.background : c.ui.cardBg;
@@ -162,10 +170,10 @@ export default function ChatConversationScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.messages}
-          contentContainerStyle={[
-            styles.messagesContent,
-            { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + sp['4'] },
-          ]}
+        contentContainerStyle={[
+          styles.messagesContent,
+          { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + sp['4'] },
+        ]}
         showsVerticalScrollIndicator={false}
         onContentSizeChange={scrollToEnd}
         keyboardShouldPersistTaps="handled"
@@ -181,7 +189,7 @@ export default function ChatConversationScreen() {
             />
           ))}
 
-          {isLoading && <TypingIndicator />}
+          {sendMessage.isPending && <TypingIndicator />}
         </View>
       </ScrollView>
 
@@ -283,15 +291,6 @@ export default function ChatConversationScreen() {
   );
 }
 
-/**
- * MessageBubble - Enterprise Grade Message Component
- *
- * Features:
- * - Clean avatar for assistant, user-aligned for user
- * - Copy and regenerate actions
- * - Subtle hover/press states
- * - Full theme integration
- */
 function MessageBubble({
   message,
   isFirst,
@@ -396,7 +395,6 @@ function MessageBubble({
           </Text>
         </View>
 
-        {/* Message Actions */}
         {!isUser && (
           <View style={styles.messageActions}>
             <TouchableOpacity
@@ -420,9 +418,6 @@ function MessageBubble({
   );
 }
 
-/**
- * TypingIndicator - Shows AI is thinking
- */
 function TypingIndicator() {
   const c = useTheme();
   const dots = useRef([
@@ -504,8 +499,6 @@ function TypingIndicator() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-
-  // Messages
   messages: { flex: 1 },
   messagesContent: {
     paddingTop: sp['4'],
@@ -514,8 +507,6 @@ const styles = StyleSheet.create({
   messagesList: {
     gap: sp['4'],
   },
-
-  // Message Row
   messageRow: {
     flexDirection: 'row',
     gap: sp['3'],
@@ -542,8 +533,6 @@ const styles = StyleSheet.create({
   messageContentUser: {
     alignItems: 'flex-end',
   },
-
-  // Bubble
   bubble: {
     borderRadius: 18,
     paddingHorizontal: sp['4'],
@@ -562,8 +551,6 @@ const styles = StyleSheet.create({
     ...text.body,
     lineHeight: 22,
   },
-
-  // Attachment
   attachmentBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -578,8 +565,6 @@ const styles = StyleSheet.create({
     ...text.bodySm,
     fontWeight: '500',
   },
-
-  // Message Actions
   messageActions: {
     flexDirection: 'row',
     gap: sp['2'],
@@ -589,8 +574,6 @@ const styles = StyleSheet.create({
     padding: sp['2'],
     borderRadius: 8,
   },
-
-  // Typing Indicator
   typingRow: {
     flexDirection: 'row',
     gap: sp['3'],
@@ -612,8 +595,6 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-
-  // Input Container
   inputContainer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: sp['4'],

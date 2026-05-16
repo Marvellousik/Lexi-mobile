@@ -2,6 +2,8 @@ export const lightColors = {
   brand: {
     primary: '#3D7A52',
     primaryLight: '#EAF4EE',
+    primaryTint: '#6B9E7C',
+    primaryMuted: '#C3D9C9',
     primaryDark: '#2D5A3D',
   },
   text: {
@@ -15,8 +17,10 @@ export const lightColors = {
   ui: {
     background: '#FFFFFF',
     inputBorder: '#E5E5E5',
+    inputFocusBg: '#F9FFF9',
     divider: '#DDDDDD',
     cardBg: '#F5F5F5',
+    errorBg: '#FEF2F2',
     playerCard: '#FFFDE7',
     playerCardDark: '#2C2C2C',
     pageBgDark: '#1A1A1A',
@@ -44,6 +48,8 @@ export const darkColors = {
   brand: {
     primary: '#3D7A52',
     primaryLight: '#EAF4EE',
+    primaryTint: '#5A9E72',
+    primaryMuted: '#2A4D38',
     primaryDark: '#2D5A3D',
   },
   text: {
@@ -57,8 +63,10 @@ export const darkColors = {
   ui: {
     background: '#1A1A1A',
     inputBorder: '#444444',
+    inputFocusBg: '#1A2E22',
     divider: '#444444',
     cardBg: '#2C2C2C',
+    errorBg: '#3D1F1F',
     playerCard: '#2C2C2C',
     playerCardDark: '#2C2C2C',
     pageBgDark: '#1A1A1A',

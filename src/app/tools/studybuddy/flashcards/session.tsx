@@ -6,27 +6,23 @@ import {
   StyleSheet,
   Animated,
 } from 'react-native';
-// FIX: Imported from safe-area-context to prevent the crash
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useFlashcardsStore } from '@/stores/flashcardsStore';
 import { text } from '@/constants/typography';
+import { FlashcardSkeleton } from '@/components/skeleton/Skeleton';
 import { sp } from '@/constants/spacing';
-
-const FLASHCARDS = [
-  { id: '1', front: 'What year was Adolf Hitler born?', back: '1889' },
-  { id: '2', front: 'Where was Adolf Hitler born?', back: 'Braunau am Inn, Austria' },
-  { id: '3', front: 'What was Hitler\'s early career aspiration?', back: 'Artist' },
-];
 
 export default function FlashcardsSessionScreen() {
   const c = useTheme();
+  const { flashcards } = useFlashcardsStore();
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const flipAnim = useRef(new Animated.Value(0)).current;
 
-  const current = FLASHCARDS[index];
+  const current = flashcards[index];
 
   useEffect(() => {
     Animated.timing(flipAnim, {
@@ -38,12 +34,12 @@ export default function FlashcardsSessionScreen() {
 
   const handleNext = () => {
     setFlipped(false);
-    setIndex((prev) => (prev + 1) % FLASHCARDS.length);
+    setIndex((prev) => (prev + 1) % flashcards.length);
   };
 
   const handlePrev = () => {
     setFlipped(false);
-    setIndex((prev) => (prev - 1 + FLASHCARDS.length) % FLASHCARDS.length);
+    setIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
   };
 
   const frontRotate = flipAnim.interpolate({
@@ -56,13 +52,24 @@ export default function FlashcardsSessionScreen() {
     outputRange: ['180deg', '360deg'],
   });
 
+  if (!current) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
+        <StatusBar style={c.isDark ? 'light' : 'dark'} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={[text.body, { color: c.text.muted }]}>No flashcards loaded.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.ui.background }]} edges={['top']}>
       <StatusBar style={c.isDark ? 'light' : 'dark'} />
 
       <View style={styles.header}>
         <Text style={[styles.counter, { color: c.text.muted }]}>
-          {index + 1} / {FLASHCARDS.length}
+          {index + 1} / {flashcards.length}
         </Text>
       </View>
 

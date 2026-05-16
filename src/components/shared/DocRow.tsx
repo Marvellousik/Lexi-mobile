@@ -21,7 +21,7 @@ export function DocRow({ filename, fileType, onDismiss }: DocRowProps) {
         { backgroundColor: c.ui.cardBg },
       ]}
     >
-      <View style={[styles.iconContainer, { backgroundColor: 'rgba(61,122,82,0.12)' }]}>
+      <View style={[styles.iconContainer, { backgroundColor: c.brand.primary + '1F' }]}>
         <Ionicons name="document-text" size={20} color={c.brand.primary} />
       </View>
       <View style={styles.textBlock}>

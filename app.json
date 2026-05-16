@@ -14,6 +14,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -41,7 +47,8 @@
         }
       ],
       "expo-av",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true

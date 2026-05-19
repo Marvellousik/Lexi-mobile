@@ -66,6 +66,7 @@ export default function GlobalTabBar() {
 
   if (!user) return null;
   if (AUTH_PATHS.includes(pathname)) return null;
+  if (pathname.startsWith('/tools')) return null;
 
   const activeColor = c.brand.primaryDark;
   const inactiveColor = c.text.secondary;

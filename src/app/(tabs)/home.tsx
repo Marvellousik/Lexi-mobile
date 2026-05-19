@@ -8,6 +8,7 @@ import RecentFiles from '@/components/dashboard/RecentFiles';
 import { useTheme } from '@/hooks/useTheme';
 import { useDashboard } from '@/hooks/queries';
 import { DashboardSkeleton } from '@/components/skeleton/Skeleton';
+import { useExitOnBack } from '@/hooks/useExitOnBack';
 import { sp } from '@/constants/spacing';
 import { text } from '@/constants/typography';
 
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const router = useRouter();
   const c = useTheme();
   const { data, isPending, isError, refetch } = useDashboard();
+  useExitOnBack();
 
   if (isPending) {
     return (

@@ -161,9 +161,9 @@ export default function Sidebar() {
     setExpandedSection((prev) => (prev === section ? null : section));
   }, []);
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    logout();
+    await logout();
     closeSidebar();
     router.replace('/(auth)/login');
   }, [logout, closeSidebar, router]);

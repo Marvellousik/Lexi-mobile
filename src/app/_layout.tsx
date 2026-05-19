@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, Animated, Image } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,6 +9,7 @@ import GlobalTabBar from '@/components/layout/GlobalTabBar';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { registerMockAdapter } from '@/lib/mockAdapter';
+import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/hooks/useTheme';
 
 SplashScreen.preventAutoHideAsync();
@@ -16,18 +17,20 @@ registerMockAdapter();
 
 export default function RootLayout() {
   const c = useTheme();
+  const router = useRouter();
+
   const [appIsReady, setAppIsReady] = useState(false);
   const [splashAnimationComplete, setSplashAnimationComplete] = useState(false);
-  
+
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current; 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     async function prepare() {
       try {
         await new Promise(resolve => setTimeout(resolve, 1500));
       } catch (e) {
-        console.warn(e);
+        console.warn('Splash preparation failed:', e);
       } finally {
         setAppIsReady(true);
       }
@@ -37,24 +40,34 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (appIsReady) {
-      SplashScreen.hideAsync().then(() => {
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 0,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1.15,
-            duration: 600,
-            useNativeDriver: true,
-          })
-        ]).start(() => {
-          setSplashAnimationComplete(true);
-        });
-      });
+      async function routeUser() {
+        const { restoreSession } = useAuthStore.getState();
+        const user = await restoreSession();
+        const targetRoute = user ? '/(tabs)/home' : '/onboarding';
+        router.replace(targetRoute as any);
+
+        setTimeout(() => {
+          SplashScreen.hideAsync().then(() => {
+            Animated.parallel([
+              Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 600,
+                useNativeDriver: true,
+              }),
+              Animated.timing(scaleAnim, {
+                toValue: 1.15,
+                duration: 600,
+                useNativeDriver: true,
+              })
+            ]).start(() => {
+              setSplashAnimationComplete(true);
+            });
+          });
+        }, 100);
+      }
+      routeUser();
     }
-  }, [appIsReady, fadeAnim, scaleAnim]);
+  }, [appIsReady, router, fadeAnim, scaleAnim]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -62,11 +75,13 @@ export default function RootLayout() {
         <SafeAreaView style={{ flex: 1, backgroundColor: c.ui.background }} edges={['top']}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
+            <Stack.Screen name="onboarding/index" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="settings/index" />
           </Stack>
-          <GlobalTabBar />
+
+          {splashAnimationComplete && <GlobalTabBar />}
         </SafeAreaView>
 
         <StatusBar style={c.isDark ? 'light' : 'dark'} />

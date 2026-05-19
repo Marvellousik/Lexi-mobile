@@ -26,17 +26,40 @@ const isMockEnabled = () => {
   }
 };
 
+// ─── MOCK AUTH HELPERS ───
+const getMockName = () =>
+  `${process.env.EXPO_PUBLIC_MOCK_USER_NAME || 'marv'} ${process.env.EXPO_PUBLIC_MOCK_USER_SURNAME || 'ik'}`;
+
+const getMockEmail = () => process.env.EXPO_PUBLIC_MOCK_USER_EMAIL || 'marv123@gmail.com';
+const getMockPassword = () => process.env.EXPO_PUBLIC_MOCK_USER_PASSWORD || 'password123@';
+const getMockCode = () => process.env.EXPO_PUBLIC_MOCK_USER_CODE || '123456';
+
+const registeredUsers = new Map<string, { id: string; name: string; email: string }>();
+
+const seedDefaultMockUser = () => {
+  const email = getMockEmail();
+  if (!registeredUsers.has(email)) {
+    registeredUsers.set(email, {
+      id: 'mock_user_001',
+      name: getMockName(),
+      email,
+    });
+  }
+};
+
 // ─── FIXTURES ───
 const FIXTURES: Record<string, (config?: any) => unknown> = {
   'GET /dashboard': () => ({
     greeting: 'Good afternoon',
-    userName: 'Victoria Smith',
+    userName: getMockName(),
     avatarUrl: null,
     tools: [
-      { id: 'tts', title: 'Text to Speech', desc: 'Listen to notes', route: '/tools/tts' },
-      { id: 'reading', title: 'Reading Assistant', desc: 'Simplify words', route: '/tools/reading' },
-      { id: 'buddy', title: 'Study Buddy', desc: 'Upload notes', route: '/tools/studybuddy' },
-      { id: 'notes', title: 'Note Taker', desc: 'Voice to text', route: '/tools/writing' },
+      { id: 'tts', title: 'Text to Speech', desc: 'Listen to your notes on the go', route: '/tools/tts' },
+      { id: 'reading', title: 'Reading Assistant', desc: 'Study better as words are simplified into bits', route: '/tools/reading' },
+      { id: 'bot', title: 'Chat Bot', desc: 'Understand your notes better. Just upload!', route: '/tools/studybuddy/chat' },
+      { id: 'notes', title: 'Note Taker', desc: 'Just speak and we will do the writing', route: '/tools/writing' },
+      { id: 'flashcards', title: 'Flashcards', desc: 'Use flashcards to help you memorize faster and better', route: '/tools/studybuddy/flashcards' },
+      { id: 'quizzes', title: 'Quizzes', desc: 'Take quizzes to test your knowledge', route: '/tools/studybuddy/quiz' },
     ],
     recentFiles: [
       { id: '1', name: 'Operating Systems', meta: 'Quiz \u2022 12th March, 2026', color: '#FFEBEE' },
@@ -129,8 +152,54 @@ const FIXTURES: Record<string, (config?: any) => unknown> = {
     changes: 3,
   }),
 
+  'POST /auth/login': (config?: any) => {
+    seedDefaultMockUser();
+    const payload = config?.data ? JSON.parse(config.data) : {};
+    const expectedEmail = getMockEmail();
+    const expectedPassword = getMockPassword();
+
+    const user = registeredUsers.get(payload.email);
+    if (user && payload.password === expectedPassword) {
+      return {
+        data: {
+          access_token: 'mock_jwt_access_token_' + Date.now(),
+          refresh_token: 'mock_jwt_refresh_token_' + Date.now(),
+          user,
+        },
+      };
+    }
+
+    throw {
+      response: { status: 401, data: { message: 'Invalid email or password.' } },
+    };
+  },
+
+  'POST /auth/register': (config?: any) => {
+    seedDefaultMockUser();
+    const payload = config?.data ? JSON.parse(config.data) : {};
+    if (registeredUsers.has(payload.email)) {
+      throw {
+        response: { status: 409, data: { message: 'An account with this email already exists.' } },
+      };
+    }
+    const user = {
+      id: 'new_user_' + Math.floor(Math.random() * 1000),
+      name: payload.name,
+      email: payload.email,
+    };
+    registeredUsers.set(payload.email, user);
+    return {
+      data: {
+        access_token: 'mock_jwt_access_token_newuser',
+        refresh_token: 'mock_jwt_refresh_token_newuser',
+        user,
+      },
+    };
+  },
+
   'POST /auth/resend-verification': () => ({
     message: 'Verification email sent successfully.',
+    code: getMockCode(),
   }),
 };
 

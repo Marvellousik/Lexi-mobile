@@ -75,9 +75,9 @@ export default function LoginScreen() {
 
     try {
       const res = await authService.login({ email: email.trim(), password });
-      const { access_token, refresh_token, user } = res.data;
+      const { user } = res.data;
       
-      await setAuth(user, access_token, refresh_token);
+      setAuth(user);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)/home');
     } catch (err: any) {

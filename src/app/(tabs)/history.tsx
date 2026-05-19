@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useHistory } from '@/hooks/queries';
+import { useExitOnBack } from '@/hooks/useExitOnBack';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 import { SkeletonRow as SkeletonRecentRow } from '@/components/skeleton/Skeleton';

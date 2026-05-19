@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/hooks/useTheme';
 import { useAnimatedPress } from '@/hooks/useAnimatedPress';
+import { useExitOnBack } from '@/hooks/useExitOnBack';
 import { text } from '@/constants/typography';
 import { sp } from '@/constants/spacing';
 import * as Haptics from 'expo-haptics';
@@ -27,9 +28,9 @@ export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const c = useTheme();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    logout();
+    await logout();
     router.replace('/(auth)/login');
   };
 
@@ -50,10 +51,10 @@ export default function ProfileScreen() {
             </Text>
           </View>
           <Text style={[styles.name, { color: c.text.primary }]}>
-            {user?.name || 'Victoria'}
+            {user?.name || 'User'}
           </Text>
           <Text style={[styles.email, { color: c.text.muted }]}>
-            {user?.email || 'victoria@example.com'}
+            {user?.email || ''}
           </Text>
         </View>
 

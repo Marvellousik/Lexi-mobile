@@ -11,13 +11,19 @@ import BookIcon from '../../../assets/3dicons-notebook-dynamic-color.svg';
 import TargetIcon from '../../../assets/3dicons-target-dynamic-color.svg';
 import PencilIcon from '../../../assets/3dicons-pencil-iso-color.svg';
 
+// NEW SVGs (Ensure these exist in your assets folder)
+import FlashcardIcon from '../../../assets/flashcard-icon.svg';
+import QuizIcon from '../../../assets/quiz-icon.svg';
+
 const { width } = Dimensions.get('window');
 
 const ICON_MAP: Record<string, React.FC<{ width: number; height: number }>> = {
   tts: HeadphoneIcon,
   reading: BookIcon,
-  buddy: TargetIcon,
+  bot: TargetIcon, 
   notes: PencilIcon,
+  flashcards: FlashcardIcon, 
+  quizzes: QuizIcon,         
 };
 
 interface ToolGridProps {
@@ -31,6 +37,7 @@ export function ToolGrid({ tools }: ToolGridProps) {
   return (
     <View style={styles.grid}>
       {tools.map((tool) => {
+        // Fallback to TargetIcon if the ID doesn't match the map
         const Icon = ICON_MAP[tool.id] ?? TargetIcon;
         return (
           <TouchableOpacity
@@ -54,8 +61,15 @@ export function ToolGrid({ tools }: ToolGridProps) {
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  cardWrapper: { width: (width - 56) / 2, marginBottom: 20 },
+  grid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    justifyContent: 'space-between' 
+  },
+  cardWrapper: { 
+    width: (width - 56) / 2, 
+    marginBottom: 20 
+  },
   card: {
     height: 190,
     borderRadius: 24,
@@ -63,7 +77,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapper: { marginBottom: 10 },
-  cardTitle: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
-  cardDesc: { fontSize: 10, color: '#A5D6A7', textAlign: 'center', marginTop: 4 },
+  iconWrapper: { 
+    marginBottom: 10 
+  },
+  cardTitle: { 
+    fontSize: 14, 
+    fontWeight: '700', 
+    textAlign: 'center' 
+  },
+  cardDesc: { 
+    fontSize: 10, 
+    color: '#A5D6A7', 
+    textAlign: 'center', 
+    marginTop: 4 
+  },
 });

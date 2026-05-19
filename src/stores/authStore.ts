@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
 
 interface User {
   id: string;
@@ -11,29 +9,45 @@ interface User {
 
 interface AuthState {
   user: User | null;
-  setAuth: (user: User, accessToken: string, refreshToken: string) => Promise<void>;
+  setAuth: (user: User) => Promise<void>;
   logout: () => Promise<void>;
+  restoreSession: () => Promise<User | null>;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      setAuth: async (user, accessToken, refreshToken) => {
-        await SecureStore.setItemAsync('access_token', accessToken);
-        await SecureStore.setItemAsync('refresh_token', refreshToken);
-        set({ user });
-      },
-      logout: async () => {
-        await SecureStore.deleteItemAsync('access_token');
-        await SecureStore.deleteItemAsync('refresh_token');
-        set({ user: null });
-      },
-    }),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ user: state.user }),
+const LAST_LOGIN_KEY = 'lexi_last_login_at';
+const SESSION_USER_KEY = 'lexi_session_user';
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+
+  setAuth: async (user) => {
+    await AsyncStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
+    await AsyncStorage.setItem(LAST_LOGIN_KEY, Date.now().toString());
+    set({ user });
+  },
+
+  logout: async () => {
+    await AsyncStorage.removeItem(SESSION_USER_KEY);
+    await AsyncStorage.removeItem(LAST_LOGIN_KEY);
+    set({ user: null });
+  },
+
+  restoreSession: async () => {
+    const lastLogin = await AsyncStorage.getItem(LAST_LOGIN_KEY);
+    const userJson = await AsyncStorage.getItem(SESSION_USER_KEY);
+
+    if (!lastLogin || !userJson) return null;
+
+    const elapsed = Date.now() - parseInt(lastLogin, 10);
+    if (elapsed > THIRTY_DAYS_MS) {
+      await AsyncStorage.removeItem(SESSION_USER_KEY);
+      await AsyncStorage.removeItem(LAST_LOGIN_KEY);
+      return null;
     }
-  )
-);
+
+    const user = JSON.parse(userJson) as User;
+    set({ user });
+    return user;
+  },
+}));
